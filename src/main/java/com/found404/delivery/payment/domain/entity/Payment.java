@@ -1,5 +1,6 @@
 package com.found404.delivery.payment.domain.entity;
 
+import com.found404.delivery.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
 
@@ -18,7 +19,7 @@ import java.util.UUID;
                 // 주문 1건당 결제 1건
         }
 )
-public class Payment {
+public class Payment extends BaseEntity {
     @Id
     @UuidGenerator
     @Column(name = "payment_id", nullable = false, updatable = false)
@@ -47,33 +48,6 @@ public class Payment {
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "created_by")
-    private Long createdBy;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "updated_by")
-    private Long updatedBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private Long deletedBy;
-
     protected Payment() {
-    }
-
-    @PrePersist  // DB에 처음 저장되기 직전에 실행
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
-    @PreUpdate   // DB에서 수정되기 직전에 실행
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 }
