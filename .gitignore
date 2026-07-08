@@ -8,6 +8,8 @@ build/
 ### 시크릿/환경설정 ###
 application-local.yml
 application-local.yaml
+!src/main/resources/application-local.yaml
+!src/main/resources/application-docker.yaml
 .env
 *.env
 
