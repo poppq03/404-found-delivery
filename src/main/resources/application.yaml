@@ -2,7 +2,7 @@ spring:
   application:
     name: 404-found-delivery
   profiles:
-    default: local
+    active: local
   jpa:
     hibernate:
       ddl-auto: validate

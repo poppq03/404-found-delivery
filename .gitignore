@@ -12,6 +12,7 @@ application-local.yaml
 !src/main/resources/application-docker.yaml
 .env
 *.env
+!.env.example
 
 ### 로그 파일 ###
 *.log
