@@ -1,0 +1,3 @@
+-- 담당: 우현
+-- 테이블: p_address (사용자 배송지)
+-- TODO: CREATE TABLE 문 작성 후 이 주석 삭제
