@@ -53,6 +53,14 @@ public class AddressService {
 
         return AddressResponseDto.from(address);
     }
+
+    @Transactional
+    public void deleteAddress(Long userId, UUID addressId) {
+        Address address = findAddressByIdAndUserId(addressId, userId);
+        address.markDeleted(userId);
+    }
+
+
     private void validatePageSize(int size) {
         if (size != 10 && size != 30 && size != 50) {
             throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);
