@@ -18,7 +18,7 @@ public enum ErrorCode {
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 중인 email입니다."),
     INVALID_USERNAME(HttpStatus.BAD_REQUEST, "username 형식이 올바르지 않습니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "password 형식이 올바르지 않습니다. (8~15자, 대소문자+숫자+특수문자)"),
-    INVALID_CREDENTIALS(HttpStatus.CONFLICT, "username 또는 password가 일치하지 않습니다."),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "username 또는 password가 일치하지 않습니다."),
     ACCOUNT_DELETED(HttpStatus.FORBIDDEN, "탈퇴(Soft Delete) 처리된 계정입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않거나 권한이 없는 유저입니다."),
     USER_ALREADY_DELETED(HttpStatus.CONFLICT, "이미 삭제된 계정입니다."),
