@@ -1,5 +1,7 @@
 package com.found404.delivery.domain.address.entity;
 
+import com.found404.delivery.domain.address.dto.AddressRequestDto;
+import com.found404.delivery.domain.address.dto.AddressUpdateRequestDto;
 import com.found404.delivery.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -45,4 +47,15 @@ public class Address extends BaseEntity {
 
     @Column(name = "is_default", nullable = false)
     private boolean isDefault = false;
+
+    public static Address create(Long userId, AddressRequestDto request) {
+        Address address = new Address();
+        address.userId = userId;
+        address.addressName = request.getAddressName();
+        address.address = request.getAddress();
+        address.detailAddress = request.getDetailAddress();
+        address.receiverName = request.getReceiverName();
+        address.phone = request.getPhone();
+        return address;글
+    }
 }
