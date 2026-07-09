@@ -86,4 +86,18 @@ public class AddressController {
 
         return ResponseEntity.ok(ApiResponse.success(null, "배송지가 삭제되었습니다."));
     }
+
+    @PatchMapping("/{addressId}/default")
+    public ResponseEntity<ApiResponse<AddressResponseDto>> setDefaultAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID addressId
+    ) {
+        AddressResponseDto response = addressService.setDefaultAddress(
+                userDetails.getUserId(),
+                addressId
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response, "기본 배송지가 설정되었습니다."));
+    }
+
 }
