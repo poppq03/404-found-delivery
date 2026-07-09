@@ -1,6 +1,6 @@
-package com.found404.delivery.address.domain.repository;
+package com.found404.delivery.domain.address.repository;
 
-import com.found404.delivery.address.domain.entity.Address;
+import com.found404.delivery.domain.address.entity.Address;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AddressRepository extends JpaRepository<Address, Long> {
