@@ -1,0 +1,3 @@
+-- 담당: 서인
+-- 테이블: p_category
+-- TODO: CREATE TABLE 문 작성 후 이 주석 삭제
