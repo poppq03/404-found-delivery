@@ -45,6 +45,14 @@ public class AddressService {
         Address address = findAddressByIdAndUserId(addressId, userId);
         return AddressResponseDto.from(address);
     }
+
+    @Transactional
+    public AddressResponseDto updateAddress(Long userId, UUID addressId, @Valid AddressUpdateRequestDto request) {
+        Address address = findAddressByIdAndUserId(addressId, userId);
+        address.update(request);
+
+        return AddressResponseDto.from(address);
+    }
     private void validatePageSize(int size) {
         if (size != 10 && size != 30 && size != 50) {
             throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);

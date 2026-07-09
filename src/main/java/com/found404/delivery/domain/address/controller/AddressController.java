@@ -61,4 +61,19 @@ public class AddressController {
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @PatchMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<AddressResponseDto>> updateAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID addressId,
+            @Valid @RequestBody AddressUpdateRequestDto request
+    ) {
+        AddressResponseDto response = addressService.updateAddress(
+                userDetails.getUserId(),
+                addressId,
+                request
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response, "배송지가 수정되었습니다."));
+    }
 }

@@ -66,5 +66,22 @@ public class Address extends BaseEntity {
     public void unsetDefaultAddress() {
         this.isDefault = false;
     }
+
+    public void update(AddressUpdateRequestDto request) {
+        if (request.getAddressName() != null) {
+            this.addressName = request.getAddressName();
+        }
+        if (request.getAddress() != null) {
+            this.address = request.getAddress();
+        }
+        if (request.getDetailAddress() != null) {
+            this.detailAddress = request.getDetailAddress();
+        }
+        if (request.getReceiverName() != null) {
+            this.receiverName = request.getReceiverName();
+        }
+        if (request.getPhone() != null) {
+            this.phone = request.getPhone();
+        }
     }
 }
