@@ -32,6 +32,23 @@ public class AddressService {
         return AddressResponseDto.from(savedAddress);
     }
 
+    public Page<AddressResponseDto> getMyAddresses(Long userId, int page, int size) {
+        validatePageSize(size);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return addressRepository.findAllByUserId(userId, pageable)
+                .map(AddressResponseDto::from);
+    }
+
+    public AddressResponseDto getAddress(Long userId, UUID addressId) {
+        Address address = findAddressByIdAndUserId(addressId, userId);
+        return AddressResponseDto.from(address);
+    }
+    private void validatePageSize(int size) {
+        if (size != 10 && size != 30 && size != 50) {
+            throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);
+        }
     }
 
     private Address findAddressByIdAndUserId(UUID addressId, Long userId) {

@@ -56,6 +56,15 @@ public class Address extends BaseEntity {
         address.detailAddress = request.getDetailAddress();
         address.receiverName = request.getReceiverName();
         address.phone = request.getPhone();
-        return address;글
+        return address;
+    }
+
+    public void setDefaultAddress() {
+        this.isDefault = true;
+    }
+
+    public void unsetDefaultAddress() {
+        this.isDefault = false;
+    }
     }
 }

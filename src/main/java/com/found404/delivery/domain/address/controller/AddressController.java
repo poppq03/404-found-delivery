@@ -34,4 +34,31 @@ public class AddressController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "배송지가 등록되었습니다."));
     }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<AddressResponseDto>>> getAddresses(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+            ) {
+        Page<AddressResponseDto> response = addressService.getMyAddresses(
+                userDetails.getUserId(),
+                page,
+                size
+        );
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<AddressResponseDto>> getAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID addressId
+    ) {
+        AddressResponseDto response = addressService.getAddress(
+                userDetails.getUserId(),
+                addressId
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }
