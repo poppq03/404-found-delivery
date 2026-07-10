@@ -2,6 +2,7 @@ package com.found404.delivery.domain.menu.service;
 
 import com.found404.delivery.domain.menu.dto.MenuCreateRequestDto;
 import com.found404.delivery.domain.menu.dto.MenuCreateResponseDto;
+import com.found404.delivery.domain.menu.dto.MenuDetailResponseDto;
 import com.found404.delivery.domain.menu.entity.Menu;
 import com.found404.delivery.domain.menu.repository.MenuRepository;
 import com.found404.delivery.global.exception.CustomException;
@@ -19,10 +20,15 @@ public class MenuService {
     private final MenuRepository menuRepository;
     private final StoreOwnershipChecker storeOwnershipChecker; // TODO: Store 연동 전 현재는 [TEMP] 주입
 
+    // 숨김 메뉴 권한 헬퍼 TODO: UserRole enum 확정되면 교체 + OWNER는 본인 소유 가게만(Store 연동 후 보완)
+    private boolean canViewHidden(String role) {
+        return "OWNER".equals(role) || "MANAGER".equals(role) || "MASTER".equals(role);
+    }
+
     @Transactional
     public MenuCreateResponseDto createMenu(UUID storeId, Long userId, String role, MenuCreateRequestDto createRequest) {
 
-        // 권한 확인
+        // 권한 확인 TODO: UserRole enum 확정되면 교체
         if (!"OWNER".equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
@@ -37,9 +43,23 @@ public class MenuService {
                 .description(createRequest.getDescription())
                 .imageUrl(null) // TODO: S3 연동 시 구현
                 .displayOrder(createRequest.getDisplayOrder())
-                .isAiGenerated(Boolean.TRUE.equals(createRequest.getIsAiGenerated()))
+                .isAiGenerated(Boolean.TRUE.equals(createRequest.getAiGenerated()))
                 .build();
 
         return MenuCreateResponseDto.from(menuRepository.save(menu));
+    }
+
+    @Transactional(readOnly = true)
+    public MenuDetailResponseDto getMenu(UUID menuId, Long userId, String role) {
+
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
+
+        // 권한 확인 TODO: UserRole enum 확정되면 교체
+        if (menu.isHidden() && !canViewHidden(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        return MenuDetailResponseDto.from(menu);
     }
 }

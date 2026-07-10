@@ -26,5 +26,5 @@ public class MenuCreateRequestDto {
     @PositiveOrZero(message = "정렬 순서는 0 이상이어야 합니다.")
     private Integer displayOrder;
 
-    private Boolean isAiGenerated;
+    private Boolean aiGenerated;
 }
