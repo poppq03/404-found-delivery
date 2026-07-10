@@ -3,11 +3,15 @@ package com.found404.delivery.domain.menu.service;
 import com.found404.delivery.domain.menu.dto.MenuCreateRequestDto;
 import com.found404.delivery.domain.menu.dto.MenuCreateResponseDto;
 import com.found404.delivery.domain.menu.dto.MenuDetailResponseDto;
+import com.found404.delivery.domain.menu.dto.MenuListResponseDto;
 import com.found404.delivery.domain.menu.entity.Menu;
 import com.found404.delivery.domain.menu.repository.MenuRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +24,7 @@ public class MenuService {
     private final MenuRepository menuRepository;
     private final StoreOwnershipChecker storeOwnershipChecker; // TODO: Store 연동 전 현재는 [TEMP] 주입
 
-    // 숨김 메뉴 권한 헬퍼 TODO: UserRole enum 확정되면 교체 + OWNER는 본인 소유 가게만(Store 연동 후 보완)
+    // 숨김 메뉴 권한 헬퍼 TODO: UserRole enum 확정되면 교체 + OWNER는 본인 소유 가게일 때 true(userId로 소유 확인, Store 연동 후)
     private boolean canViewHidden(String role) {
         return "OWNER".equals(role) || "MANAGER".equals(role) || "MASTER".equals(role);
     }
@@ -61,5 +65,27 @@ public class MenuService {
         }
 
         return MenuDetailResponseDto.from(menu);
+    }
+
+    @Transactional(readOnly = true)
+    public MenuListResponseDto getMenus(UUID storeId, String keyword, Boolean soldOut, Long userId, String role, Pageable pageable) {
+
+        // path로 넘어오는 storeId 존재 검증 TODO: Store 연동 후 추가
+
+        int size = pageable.getPageSize();
+        if (size != 10 && size != 30 && size != 50) {
+            pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
+        }
+
+        // keyword null 값 처리
+        String keywordPattern = (keyword == null || keyword.isBlank())
+                ? "%"
+                : "%" + keyword + "%";
+
+        // 권한 확인 TODO: UserRole enum 확정되면 교체
+        boolean includeHidden = canViewHidden(role);
+
+        Page<Menu> menuPage = menuRepository.search(storeId, keywordPattern, soldOut, includeHidden, pageable);
+        return MenuListResponseDto.from(menuPage);
     }
 }
