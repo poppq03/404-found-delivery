@@ -1,0 +1,37 @@
+package com.found404.delivery.domain.menu.controller;
+
+import com.found404.delivery.domain.menu.dto.MenuCreateRequestDto;
+import com.found404.delivery.domain.menu.dto.MenuCreateResponseDto;
+import com.found404.delivery.domain.menu.service.MenuService;
+import com.found404.delivery.global.response.ApiResponse;
+import com.found404.delivery.global.security.CustomUserDetails;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api")
+public class MenuController {
+
+    private final MenuService menuService;
+
+    @PostMapping("/stores/{storeId}/menus")
+    public ResponseEntity<ApiResponse<MenuCreateResponseDto>> createMenu(
+            @PathVariable UUID storeId,
+            @Valid @RequestBody MenuCreateRequestDto request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+
+    ) {
+        MenuCreateResponseDto response = menuService.createMenu(storeId, userDetails.getUserId(), userDetails.getRole(), request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response));
+    }
+}
