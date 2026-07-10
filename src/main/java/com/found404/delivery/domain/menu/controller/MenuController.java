@@ -3,11 +3,15 @@ package com.found404.delivery.domain.menu.controller;
 import com.found404.delivery.domain.menu.dto.MenuCreateRequestDto;
 import com.found404.delivery.domain.menu.dto.MenuCreateResponseDto;
 import com.found404.delivery.domain.menu.dto.MenuDetailResponseDto;
+import com.found404.delivery.domain.menu.dto.MenuListResponseDto;
 import com.found404.delivery.domain.menu.service.MenuService;
 import com.found404.delivery.global.response.ApiResponse;
 import com.found404.delivery.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,6 +46,21 @@ public class MenuController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         MenuDetailResponseDto response = menuService.getMenu(menuId, userDetails.getUserId(), userDetails.getRole());
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/stores/{storeId}/menus")
+    public ResponseEntity<ApiResponse<MenuListResponseDto>> getMenuLists(
+            @PathVariable UUID storeId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Boolean soldOut,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+
+        MenuListResponseDto response = menuService.getMenus(
+                storeId, keyword, soldOut, userDetails.getUserId(), userDetails.getRole(), pageable);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
