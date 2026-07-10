@@ -27,7 +27,7 @@ public class ApiResponse<T> {
 
     // 데이터 + 안내 메시지 (회원가입, 삭제 등 완료 알림 필요한 경우)
     public static <T> ApiResponse<T> success(T data, String message) {
-        return new ApiResponse<>(true, null, message, null);
+        return new ApiResponse<>(true, data, message, null);
     }
 
     // 메시지, 데이터 둘 다 X (성공했다는 사실만 알려줌)

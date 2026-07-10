@@ -1,0 +1,3 @@
+-- 담당: 우현
+-- 테이블: p_order_item
+-- TODO: CREATE TABLE 문 작성 후 이 주석 삭제
