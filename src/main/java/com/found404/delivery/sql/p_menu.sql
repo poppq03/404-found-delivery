@@ -1,0 +1,3 @@
+-- 담당: 초인
+-- 테이블: p_menu
+-- TODO: CREATE TABLE 문 작성 후 이 주석 삭제
