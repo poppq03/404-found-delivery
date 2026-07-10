@@ -2,6 +2,7 @@ package com.found404.delivery.domain.menu.controller;
 
 import com.found404.delivery.domain.menu.dto.MenuCreateRequestDto;
 import com.found404.delivery.domain.menu.dto.MenuCreateResponseDto;
+import com.found404.delivery.domain.menu.dto.MenuDetailResponseDto;
 import com.found404.delivery.domain.menu.service.MenuService;
 import com.found404.delivery.global.response.ApiResponse;
 import com.found404.delivery.global.security.CustomUserDetails;
@@ -33,5 +34,15 @@ public class MenuController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response));
+    }
+
+    @GetMapping("/menus/{menuId}")
+    public ResponseEntity<ApiResponse<MenuDetailResponseDto>> getMenuDetails(
+            @PathVariable UUID menuId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        MenuDetailResponseDto response = menuService.getMenu(menuId, userDetails.getUserId(), userDetails.getRole());
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

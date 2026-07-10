@@ -3,40 +3,44 @@ package com.found404.delivery.domain.menu.dto;
 import com.found404.delivery.domain.menu.entity.Menu;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-public class MenuCreateResponseDto {
-
+public class MenuDetailResponseDto {
     private UUID menuId;
+    private UUID storeId;
     private String name;
     private int price;
     private String description;
     private String imageUrl;
+    private boolean hidden;
+    private boolean soldOut;
     private boolean aiGenerated;
-    private LocalDateTime createdAt;
 
-    public MenuCreateResponseDto(UUID menuId, String name, int price, String description
-            , String imageUrl, boolean aiGenerated, LocalDateTime createdAt) {
+    public MenuDetailResponseDto(UUID menuId, UUID storeId, String name, int price, String description
+            , String imageUrl, boolean hidden, boolean soldOut, boolean aiGenerated) {
         this.menuId = menuId;
+        this.storeId = storeId;
         this.name = name;
         this.price = price;
         this.description = description;
         this.imageUrl = imageUrl;
+        this.hidden = hidden;
+        this.soldOut = soldOut;
         this.aiGenerated = aiGenerated;
-        this.createdAt = createdAt;
     }
 
-    public static MenuCreateResponseDto from(Menu menu) {
-        return new MenuCreateResponseDto(
+    public static MenuDetailResponseDto from(Menu menu) {
+        return new MenuDetailResponseDto(
                 menu.getId(),
+                menu.getStoreId(),
                 menu.getName(),
                 menu.getPrice(),
                 menu.getDescription(),
                 menu.getImageUrl(),
-                menu.isAiGenerated(),
-                menu.getCreatedAt()
+                menu.isHidden(),
+                menu.isSoldOut(),
+                menu.isAiGenerated()
         );
     }
 }
