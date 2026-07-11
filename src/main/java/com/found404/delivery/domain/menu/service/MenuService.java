@@ -1,9 +1,6 @@
 package com.found404.delivery.domain.menu.service;
 
-import com.found404.delivery.domain.menu.dto.MenuCreateRequestDto;
-import com.found404.delivery.domain.menu.dto.MenuCreateResponseDto;
-import com.found404.delivery.domain.menu.dto.MenuDetailResponseDto;
-import com.found404.delivery.domain.menu.dto.MenuListResponseDto;
+import com.found404.delivery.domain.menu.dto.*;
 import com.found404.delivery.domain.menu.entity.Menu;
 import com.found404.delivery.domain.menu.repository.MenuRepository;
 import com.found404.delivery.global.exception.CustomException;
@@ -87,5 +84,24 @@ public class MenuService {
 
         Page<Menu> menuPage = menuRepository.search(storeId, keywordPattern, soldOut, includeHidden, pageable);
         return MenuListResponseDto.from(menuPage);
+    }
+
+    @Transactional
+    public MenuUpdateResponseDto updateMenu(UUID menuId, Long userId, String role, MenuUpdateRequestDto updateRequest) {
+
+        // 권한 확인 TODO: UserRole enum 확정되면 교체
+        if (!"OWNER".equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
+
+        // 가게 소유자 검증 TODO: 현재는 [TEMP]로 통과, Store 연동 후 실제로 검증
+        storeOwnershipChecker.checkOwner(userId, menu.getStoreId());
+
+        menu.update(updateRequest.getName(), updateRequest.getPrice(), updateRequest.getDescription(), updateRequest.getDisplayOrder(), updateRequest.getAiGenerated());
+
+        return MenuUpdateResponseDto.from(menu);
     }
 }
