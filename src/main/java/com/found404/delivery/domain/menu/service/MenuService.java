@@ -131,4 +131,23 @@ public class MenuService {
 
         return MenuStatusResponseDto.from(menu);
     }
+
+    @Transactional
+    public MenuDeleteResponseDto deleteMenu(UUID menuId, Long userId, String role) {
+
+        // 권한 확인 TODO: UserRole enum 확정되면 교체
+        if (!"OWNER".equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
+
+        // 가게 소유자 검증 TODO: 현재는 [TEMP]로 통과, Store 연동 후 실제로 검증
+        storeOwnershipChecker.checkOwner(userId, menu.getStoreId());
+
+        menu.markDeleted(userId);
+
+        return MenuDeleteResponseDto.from(menu);
+    }
 }
