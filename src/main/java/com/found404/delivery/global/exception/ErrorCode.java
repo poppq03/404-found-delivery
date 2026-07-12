@@ -12,6 +12,7 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "이미지는 5MB를 초과할 수 없습니다."),
     UNSUPPORTED_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않은 파일 확장자입니다."),
+    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
 
     // ===== User =====
     USERNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 중인 username입니다."),
