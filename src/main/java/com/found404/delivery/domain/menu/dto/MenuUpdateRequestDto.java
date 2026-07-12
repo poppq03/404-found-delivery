@@ -23,4 +23,6 @@ public class MenuUpdateRequestDto {
     private Integer displayOrder;
 
     private Boolean aiGenerated;
+
+    private Boolean removeImage; // true: 기존 이미지 제거
 }

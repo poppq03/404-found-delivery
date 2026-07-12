@@ -132,7 +132,8 @@ public class MenuService {
     }
 
     @Transactional
-    public MenuUpdateResponseDto updateMenu(UUID menuId, Long userId, String role, MenuUpdateRequestDto request) {
+    public MenuUpdateResponseDto updateMenu(UUID menuId, Long userId, String role,
+                                            MenuUpdateRequestDto request, MultipartFile image) {
 
         // 권한 확인 TODO: UserRole enum 확정되면 교체
         if (!"OWNER".equals(role)) {
@@ -147,7 +148,18 @@ public class MenuService {
 
         menu.update(request.getName(), request.getPrice(), request.getDescription(), request.getDisplayOrder(), request.getAiGenerated());
 
-        return MenuUpdateResponseDto.from(menu);
+        // 이미지: 교체 > 제거 > 유지
+        if (image != null && !image.isEmpty()) {
+            String ext = validateImage(image);
+            String key = "menus/" + menu.getId() + "-" + System.currentTimeMillis() + "." + ext; // 새 key로 기존 S3 보존
+            imageStorage.upload(key, image);
+            menu.updateImage(key);
+        } else if (Boolean.TRUE.equals(request.getRemoveImage())) {
+            menu.updateImage(null);
+        }
+
+        String imageUrl = (menu.getImageUrl() != null) ? imageStorage.toUrl(menu.getImageUrl()) : null;
+        return MenuUpdateResponseDto.from(menu, imageUrl);
     }
 
     @Transactional

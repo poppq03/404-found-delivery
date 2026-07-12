@@ -65,15 +65,16 @@ public class MenuController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PutMapping("/menus/{menuId}")
+    @PutMapping(value = "/menus/{menuId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<MenuUpdateResponseDto>> updateMenu(
             @PathVariable UUID menuId,
-            @Valid @RequestBody MenuUpdateRequestDto request,
+            @Valid @RequestPart("data") MenuUpdateRequestDto request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
         MenuUpdateResponseDto response = menuService.updateMenu(
-                menuId, userDetails.getUserId(), userDetails.getRole(), request);
+                menuId, userDetails.getUserId(), userDetails.getRole(), request, image);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
