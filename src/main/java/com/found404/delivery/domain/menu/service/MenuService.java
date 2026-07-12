@@ -114,6 +114,25 @@ public class MenuService {
     }
 
     @Transactional
+    public MenuUpdateResponseDto updateMenu(UUID menuId, Long userId, String role, MenuUpdateRequestDto updateRequest) {
+
+        // 권한 확인 TODO: UserRole enum 확정되면 교체
+        if (!"OWNER".equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        Menu menu = menuRepository.findById(menuId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
+
+        // 가게 소유자 검증 TODO: 현재는 [TEMP]로 통과, Store 연동 후 실제로 검증
+        storeOwnershipChecker.checkOwner(userId, menu.getStoreId());
+
+        menu.update(updateRequest.getName(), updateRequest.getPrice(), updateRequest.getDescription(), updateRequest.getDisplayOrder(), updateRequest.getAiGenerated());
+
+        return MenuUpdateResponseDto.from(menu);
+    }
+
+    @Transactional
     public MenuStatusResponseDto changeStatus(UUID menuId, Long userId, String role, MenuStatusRequestDto request) {
 
         // 권한 확인 TODO: UserRole enum 확정되면 교체

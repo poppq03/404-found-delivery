@@ -62,6 +62,19 @@ public class MenuController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PutMapping("/menus/{menuId}")
+    public ResponseEntity<ApiResponse<MenuUpdateResponseDto>> updateMenu(
+            @PathVariable UUID menuId,
+            @Valid @RequestBody MenuUpdateRequestDto request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        MenuUpdateResponseDto response = menuService.updateMenu(
+                menuId, userDetails.getUserId(), userDetails.getRole(), request);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @PatchMapping("/menus/{menuId}/status")
     public ResponseEntity<ApiResponse<MenuStatusResponseDto>> changeStatus(
             @PathVariable UUID menuId,
