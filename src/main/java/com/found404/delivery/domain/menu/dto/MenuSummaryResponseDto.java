@@ -13,13 +13,15 @@ public class MenuSummaryResponseDto {
     private int price;
     private String imageUrl;
     private boolean soldOut;
+    private int displayOrder;
 
-    public MenuSummaryResponseDto(UUID menuId, String name, int price, String imageUrl, boolean soldOut) {
+    public MenuSummaryResponseDto(UUID menuId, String name, int price, String imageUrl, boolean soldOut, int displayOrder) {
         this.menuId = menuId;
         this.name = name;
         this.price = price;
         this.imageUrl = imageUrl;
         this.soldOut = soldOut;
+        this.displayOrder = displayOrder;
     }
 
     public static MenuSummaryResponseDto from(Menu menu) {
@@ -28,7 +30,8 @@ public class MenuSummaryResponseDto {
                 menu.getName(),
                 menu.getPrice(),
                 menu.getImageUrl(),
-                menu.isSoldOut()
+                menu.isSoldOut(),
+                menu.getDisplayOrder()
         );
     }
 }

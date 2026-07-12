@@ -9,10 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,9 @@ public class MenuService {
 
     private final MenuRepository menuRepository;
     private final StoreOwnershipChecker storeOwnershipChecker; // TODO: Store 연동 전 현재는 [TEMP] 주입
+
+    // 정렬 허용 필드 (그 외 값은 기본값)
+    private static final Set<String> ALLOWED_SORT = Set.of("createdAt", "displayOrder");
 
     // 숨김 메뉴 권한 헬퍼 TODO: UserRole enum 확정되면 교체 + OWNER는 본인 소유 가게일 때 true(userId로 소유 확인, Store 연동 후)
     private boolean canViewHidden(String role) {
@@ -69,10 +76,30 @@ public class MenuService {
 
         // path로 넘어오는 storeId 존재 검증 TODO: Store 연동 후 추가
 
-        int size = pageable.getPageSize();
-        if (size != 10 && size != 30 && size != 50) {
-            pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
+        // 정렬: 허용 필드(createdAt, displayOrder) -> 그 외는 버림
+        List<Sort.Order> orders = pageable.getSort().stream()
+                .filter(order -> ALLOWED_SORT.contains(order.getProperty()))
+                .collect(Collectors.toList());
+
+        // 정렬 기본값 설정
+        if (orders.isEmpty()) {
+            orders.add(Sort.Order.desc("createdAt"));
         }
+
+        // displayOrder 정렬 시 값이 같으면 생성일 순으로 재정렬
+        boolean hasCreatedAt = orders.stream().anyMatch(order -> order.getProperty().equals("createdAt"));
+        if (!hasCreatedAt) {
+            orders.add(Sort.Order.desc("createdAt"));
+        }
+
+        int size = pageable.getPageSize();
+
+        // size 기본값 설정
+        if (size != 10 && size != 30 && size != 50) {
+            size = 10;
+        }
+
+        pageable = PageRequest.of(pageable.getPageNumber(), size, Sort.by(orders));
 
         // keyword null 값 처리
         String keywordPattern = (keyword == null || keyword.isBlank())
