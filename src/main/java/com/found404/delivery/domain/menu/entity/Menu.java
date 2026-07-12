@@ -63,4 +63,9 @@ public class Menu extends BaseEntity {
         this.displayOrder = displayOrder != null ? displayOrder : 0;
         this.isAiGenerated = isAiGenerated;
     }
+
+    public void changeStatus(Boolean isHidden, Boolean isSoldOut) {
+        if (isHidden != null) this.isHidden = isHidden;
+        if (isSoldOut != null) this.isSoldOut = isSoldOut;
+    }
 }

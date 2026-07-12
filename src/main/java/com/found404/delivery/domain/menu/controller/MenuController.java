@@ -1,9 +1,6 @@
 package com.found404.delivery.domain.menu.controller;
 
-import com.found404.delivery.domain.menu.dto.MenuCreateRequestDto;
-import com.found404.delivery.domain.menu.dto.MenuCreateResponseDto;
-import com.found404.delivery.domain.menu.dto.MenuDetailResponseDto;
-import com.found404.delivery.domain.menu.dto.MenuListResponseDto;
+import com.found404.delivery.domain.menu.dto.*;
 import com.found404.delivery.domain.menu.service.MenuService;
 import com.found404.delivery.global.response.ApiResponse;
 import com.found404.delivery.global.security.CustomUserDetails;
@@ -61,6 +58,19 @@ public class MenuController {
 
         MenuListResponseDto response = menuService.getMenus(
                 storeId, keyword, soldOut, userDetails.getUserId(), userDetails.getRole(), pageable);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/menus/{menuId}/status")
+    public ResponseEntity<ApiResponse<MenuStatusResponseDto>> changeStatus(
+            @PathVariable UUID menuId,
+            @Valid @RequestBody MenuStatusRequestDto request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        MenuStatusResponseDto response = menuService.changeStatus(
+                menuId, userDetails.getUserId(), userDetails.getRole(), request);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
