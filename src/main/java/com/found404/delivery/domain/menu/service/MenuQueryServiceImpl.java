@@ -4,6 +4,7 @@ import com.found404.delivery.domain.menu.service.MenuInfo;
 import com.found404.delivery.domain.menu.service.MenuQueryService;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
+import com.found404.delivery.global.storage.ImageStorage;
 import com.found404.delivery.domain.menu.entity.Menu;
 import com.found404.delivery.domain.menu.repository.MenuRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class MenuQueryServiceImpl implements MenuQueryService {
 
     private final MenuRepository menuRepository;
+    private final ImageStorage imageStorage;
 
     @Override
     public MenuInfo getMenuInfo(UUID menuId) {
@@ -39,6 +41,7 @@ public class MenuQueryServiceImpl implements MenuQueryService {
 
     private MenuInfo toInfo(Menu menu) {
         return new MenuInfo(menu.getId(), menu.getStoreId(), menu.getName(),
-                menu.getPrice(), menu.getImageUrl(), menu.isHidden(), menu.isSoldOut());
+                menu.getPrice(), imageStorage.toUrlOrNull(menu.getImageUrl()),
+                menu.isHidden(), menu.isSoldOut());
     }
 }

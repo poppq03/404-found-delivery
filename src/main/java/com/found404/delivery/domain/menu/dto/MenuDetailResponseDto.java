@@ -30,14 +30,14 @@ public class MenuDetailResponseDto {
         this.aiGenerated = aiGenerated;
     }
 
-    public static MenuDetailResponseDto from(Menu menu) {
+    public static MenuDetailResponseDto from(Menu menu, String imageUrl) {
         return new MenuDetailResponseDto(
                 menu.getId(),
                 menu.getStoreId(),
                 menu.getName(),
                 menu.getPrice(),
                 menu.getDescription(),
-                menu.getImageUrl(),
+                imageUrl,
                 menu.isHidden(),
                 menu.isSoldOut(),
                 menu.isAiGenerated()

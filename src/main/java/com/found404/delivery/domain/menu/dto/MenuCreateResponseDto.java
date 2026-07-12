@@ -28,13 +28,13 @@ public class MenuCreateResponseDto {
         this.createdAt = createdAt;
     }
 
-    public static MenuCreateResponseDto from(Menu menu) {
+    public static MenuCreateResponseDto from(Menu menu, String imageUrl) {
         return new MenuCreateResponseDto(
                 menu.getId(),
                 menu.getName(),
                 menu.getPrice(),
                 menu.getDescription(),
-                menu.getImageUrl(),
+                imageUrl,
                 menu.isAiGenerated(),
                 menu.getCreatedAt()
         );

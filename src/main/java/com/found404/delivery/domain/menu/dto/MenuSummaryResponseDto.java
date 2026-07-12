@@ -24,12 +24,12 @@ public class MenuSummaryResponseDto {
         this.displayOrder = displayOrder;
     }
 
-    public static MenuSummaryResponseDto from(Menu menu) {
+    public static MenuSummaryResponseDto from(Menu menu, String imageUrl) {
         return new MenuSummaryResponseDto(
                 menu.getId(),
                 menu.getName(),
                 menu.getPrice(),
-                menu.getImageUrl(),
+                imageUrl,
                 menu.isSoldOut(),
                 menu.getDisplayOrder()
         );

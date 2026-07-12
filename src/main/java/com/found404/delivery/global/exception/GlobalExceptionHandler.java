@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -29,6 +30,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT.getStatus())
                 .body(ApiResponse.fail(ErrorCode.INVALID_INPUT.name(), message));
+    }
+
+    // multipart 파일이 서버 허용 한도(max-file-size)를 초과한 경우 → 400 FILE_TOO_LARGE
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxSize(MaxUploadSizeExceededException e) {
+        ErrorCode errorCode = ErrorCode.FILE_TOO_LARGE;
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.name(), errorCode.getMessage()));
     }
 
     // 그 외 예상 못 한 모든 예외 (최후의 안전망)

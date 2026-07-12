@@ -10,9 +10,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -23,14 +25,15 @@ public class MenuController {
 
     private final MenuService menuService;
 
-    @PostMapping("/stores/{storeId}/menus")
+    @PostMapping(value = "/stores/{storeId}/menus", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<MenuCreateResponseDto>> createMenu(
             @PathVariable UUID storeId,
-            @Valid @RequestBody MenuCreateRequestDto request,
+            @Valid @RequestPart("data") MenuCreateRequestDto request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             @AuthenticationPrincipal CustomUserDetails userDetails
-
     ) {
-        MenuCreateResponseDto response = menuService.createMenu(storeId, userDetails.getUserId(), userDetails.getRole(), request);
+        MenuCreateResponseDto response = menuService.createMenu(
+                storeId, userDetails.getUserId(), userDetails.getRole(), request, image);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -62,15 +65,16 @@ public class MenuController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PutMapping("/menus/{menuId}")
+    @PutMapping(value = "/menus/{menuId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<MenuUpdateResponseDto>> updateMenu(
             @PathVariable UUID menuId,
-            @Valid @RequestBody MenuUpdateRequestDto request,
+            @Valid @RequestPart("data") MenuUpdateRequestDto request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
         MenuUpdateResponseDto response = menuService.updateMenu(
-                menuId, userDetails.getUserId(), userDetails.getRole(), request);
+                menuId, userDetails.getUserId(), userDetails.getRole(), request, image);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }

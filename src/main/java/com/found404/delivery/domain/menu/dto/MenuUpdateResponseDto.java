@@ -27,13 +27,13 @@ public class MenuUpdateResponseDto {
         this.updatedAt = updatedAt;
     }
 
-    public static MenuUpdateResponseDto from(Menu menu) {
+    public static MenuUpdateResponseDto from(Menu menu, String imageUrl) {
         return new MenuUpdateResponseDto(
                 menu.getId(),
                 menu.getName(),
                 menu.getPrice(),
                 menu.getDescription(),
-                menu.getImageUrl(),
+                imageUrl,
                 menu.isAiGenerated(),
                 menu.getUpdatedAt()
         );
