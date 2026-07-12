@@ -38,13 +38,7 @@ public class MenuService {
     public MenuCreateResponseDto createMenu(UUID storeId, Long userId, String role,
                                             MenuCreateRequestDto request, MultipartFile image) {
 
-        // 권한 확인 TODO: UserRole enum 확정되면 교체
-        if (!"OWNER".equals(role)) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
-
-        // 가게 소유자 검증 TODO: 현재는 [TEMP]로 통과, Store 연동 후 실제로 검증
-        storeOwnershipChecker.checkOwner(userId, storeId);
+        validateOwnerAccess(role, userId, storeId);
 
         // save 전에 검증 (확장자만 받아둠)
         String ext = null;
@@ -66,27 +60,25 @@ public class MenuService {
 
         // image key 조립
         if (ext != null) {
-            String key = "menus/" + menu.getId() + "." + ext;
+            String key = menuImageKey(menu.getId(), ext);
             imageStorage.upload(key, image);
             menu.updateImage(key);
         }
 
-        String imageUrl = (menu.getImageUrl() != null) ? imageStorage.toUrl(menu.getImageUrl()) : null;
-        return MenuCreateResponseDto.from(menu, imageUrl);
+        return MenuCreateResponseDto.from(menu, resolveImageUrl(menu));
     }
 
     @Transactional(readOnly = true)
     public MenuDetailResponseDto getMenu(UUID menuId, Long userId, String role) {
 
-        Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
+        Menu menu = getMenuOrThrow(menuId);
 
-        // 권한 확인 TODO: UserRole enum 확정되면 교체
+        // 권한 확인 TODO: [TEMP]
         if (menu.isHidden() && !canViewHidden(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        return MenuDetailResponseDto.from(menu);
+        return MenuDetailResponseDto.from(menu, resolveImageUrl(menu));
     }
 
     @Transactional(readOnly = true)
@@ -124,57 +116,51 @@ public class MenuService {
                 ? "%"
                 : "%" + keyword + "%";
 
-        // 권한 확인 TODO: UserRole enum 확정되면 교체
         boolean includeHidden = canViewHidden(role);
 
         Page<Menu> menuPage = menuRepository.search(storeId, keywordPattern, soldOut, includeHidden, pageable);
-        return MenuListResponseDto.from(menuPage);
+        return MenuListResponseDto.from(menuPage, this::resolveImageUrl);
     }
 
     @Transactional
     public MenuUpdateResponseDto updateMenu(UUID menuId, Long userId, String role,
                                             MenuUpdateRequestDto request, MultipartFile image) {
 
-        // 권한 확인 TODO: UserRole enum 확정되면 교체
-        if (!"OWNER".equals(role)) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
+        Menu menu = getMenuOrThrow(menuId);
 
-        Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
-
-        // 가게 소유자 검증 TODO: 현재는 [TEMP]로 통과, Store 연동 후 실제로 검증
-        storeOwnershipChecker.checkOwner(userId, menu.getStoreId());
+        validateOwnerAccess(role, userId, menu.getStoreId());
 
         menu.update(request.getName(), request.getPrice(), request.getDescription(), request.getDisplayOrder(), request.getAiGenerated());
 
-        // 이미지: 교체 > 제거 > 유지
+        // 이미지 교체 또는 제거 시 기존 S3 파일 삭제
         if (image != null && !image.isEmpty()) {
             String ext = validateImage(image);
-            String key = "menus/" + menu.getId() + "-" + System.currentTimeMillis() + "." + ext; // 새 key로 기존 S3 보존
-            imageStorage.upload(key, image);
-            menu.updateImage(key);
+            String newKey = menuImageKey(menu.getId(), ext);
+            String oldKey = menu.getImageUrl();
+
+            imageStorage.upload(newKey, image);
+            // 확장자 달라진 경우 기존 파일 제거
+            if (oldKey != null && !oldKey.equals(newKey)) {
+                imageStorage.delete(oldKey);
+            }
+            menu.updateImage(newKey);
         } else if (Boolean.TRUE.equals(request.getRemoveImage())) {
+            String oldKey = menu.getImageUrl();
+            if (oldKey != null) {
+                imageStorage.delete(oldKey);
+            }
             menu.updateImage(null);
         }
 
-        String imageUrl = (menu.getImageUrl() != null) ? imageStorage.toUrl(menu.getImageUrl()) : null;
-        return MenuUpdateResponseDto.from(menu, imageUrl);
+        return MenuUpdateResponseDto.from(menu, resolveImageUrl(menu));
     }
 
     @Transactional
     public MenuStatusResponseDto changeStatus(UUID menuId, Long userId, String role, MenuStatusRequestDto request) {
 
-        // 권한 확인 TODO: UserRole enum 확정되면 교체
-        if (!"OWNER".equals(role)) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
+        Menu menu = getMenuOrThrow(menuId);
 
-        Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
-
-        // 가게 소유자 검증 TODO: 현재는 [TEMP]로 통과, Store 연동 후 실제로 검증
-        storeOwnershipChecker.checkOwner(userId, menu.getStoreId());
+        validateOwnerAccess(role, userId, menu.getStoreId());
 
         menu.changeStatus(request.getHidden(), request.getSoldOut());
 
@@ -184,16 +170,9 @@ public class MenuService {
     @Transactional
     public MenuDeleteResponseDto deleteMenu(UUID menuId, Long userId, String role) {
 
-        // 권한 확인 TODO: UserRole enum 확정되면 교체
-        if (!"OWNER".equals(role)) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
+        Menu menu = getMenuOrThrow(menuId);
 
-        Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
-
-        // 가게 소유자 검증 TODO: 현재는 [TEMP]로 통과, Store 연동 후 실제로 검증
-        storeOwnershipChecker.checkOwner(userId, menu.getStoreId());
+        validateOwnerAccess(role, userId, menu.getStoreId());
 
         menu.markDeleted(userId);
 
@@ -202,7 +181,23 @@ public class MenuService {
 
     // ===== private 헬퍼 =====
 
-    // image file 크기, 확장자 검증 헬퍼
+    // 메뉴 조회 (없으면 404)
+    private Menu getMenuOrThrow(UUID menuId) {
+        return menuRepository.findById(menuId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
+    }
+
+    // 메뉴 이미지 S3 key
+    private String menuImageKey(UUID menuId, String ext) {
+        return "menus/" + menuId + "." + ext;
+    }
+
+    // DB에 저장된 S3 key → URL 변환, 이미지 없을 시 null
+    private String resolveImageUrl(Menu menu) {
+        return imageStorage.toUrlOrNull(menu.getImageUrl());
+    }
+
+    // image file 크기, 확장자 검증
     private String validateImage(MultipartFile file) {
         if (file.getSize() > MAX_IMAGE_SIZE) throw new CustomException(ErrorCode.FILE_TOO_LARGE);
         String name = file.getOriginalFilename();
@@ -212,7 +207,17 @@ public class MenuService {
         return ext;
     }
 
-    // 숨김 메뉴 권한 헬퍼 TODO: UserRole enum 확정되면 교체 + OWNER는 본인 소유 가게일 때 true(userId로 소유 확인, Store 연동 후)
+    // OWNER + 본인 소유 가게 검증 TEMP
+    // TODO: UserRole enum + Store 연동 시 추가 구현
+    private void validateOwnerAccess(String role, Long userId, UUID storeId) {
+        if (!"OWNER".equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        storeOwnershipChecker.checkOwner(userId, storeId);
+    }
+
+    // 숨김 메뉴 권한 TEMP
+    // TODO: UserRole enum 확정되면 교체 + OWNER는 본인 소유 가게일 때 true(userId로 소유 확인, Store 연동 후)
     private boolean canViewHidden(String role) {
         return "OWNER".equals(role) || "MANAGER".equals(role) || "MASTER".equals(role);
     }
