@@ -76,4 +76,9 @@ public class Menu extends BaseEntity {
         if (isHidden != null) this.isHidden = isHidden;
         if (isSoldOut != null) this.isSoldOut = isSoldOut;
     }
+
+    // image URL이 아닌 Key를 저장
+    public void updateImage(String imageKey) {
+        this.imageUrl = imageKey;
+    }
 }
