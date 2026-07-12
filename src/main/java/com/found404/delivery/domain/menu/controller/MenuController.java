@@ -74,4 +74,28 @@ public class MenuController {
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @PatchMapping("/menus/{menuId}/status")
+    public ResponseEntity<ApiResponse<MenuStatusResponseDto>> changeStatus(
+            @PathVariable UUID menuId,
+            @Valid @RequestBody MenuStatusRequestDto request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        MenuStatusResponseDto response = menuService.changeStatus(
+                menuId, userDetails.getUserId(), userDetails.getRole(), request);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @DeleteMapping("/menus/{menuId}")
+    public ResponseEntity<ApiResponse<MenuDeleteResponseDto>> deleteMenu(
+            @PathVariable UUID menuId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        MenuDeleteResponseDto response = menuService.deleteMenu(menuId, userDetails.getUserId(), userDetails.getRole());
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }
