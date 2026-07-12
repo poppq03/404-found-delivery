@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.function.Function;
 
 @Getter
 public class MenuListResponseDto {
@@ -23,9 +24,9 @@ public class MenuListResponseDto {
         this.totalPages = totalPages;
     }
 
-    public static MenuListResponseDto from(Page<Menu> menuPage) {
+    public static MenuListResponseDto from(Page<Menu> menuPage, Function<Menu, String> imageUrlResolver) {
         List<MenuSummaryResponseDto> content = menuPage.getContent().stream()
-                .map(MenuSummaryResponseDto::from)
+                .map(menu -> MenuSummaryResponseDto.from(menu, imageUrlResolver.apply(menu)))
                 .toList();
 
         return new MenuListResponseDto(

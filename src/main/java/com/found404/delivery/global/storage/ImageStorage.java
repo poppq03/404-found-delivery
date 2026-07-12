@@ -9,4 +9,8 @@ public interface ImageStorage {
     void delete(String key);
 
     String toUrl(String key);
+
+    default String toUrlOrNull(String key) {
+        return key != null ? toUrl(key) : null;
+    }
 }
