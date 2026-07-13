@@ -133,7 +133,7 @@ public class OrderService {
                 throw new CustomException(ErrorCode.DIFFERENT_STORE_MENU);
             }
 
-            if (menuInfo.isHidden() || menuInfo.isSoldOut()) {
+            if (menuInfo.hidden() || menuInfo.soldOut()) {
                 throw new CustomException(ErrorCode.MENU_UNAVAILABLE);
             }
         }
