@@ -54,3 +54,16 @@ public class OrderController {
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> getMyOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID orderId
+    ) {
+        OrderResponseDto response = orderService.getMyOrder(
+                userDetails.getUserId(),
+                orderId
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }

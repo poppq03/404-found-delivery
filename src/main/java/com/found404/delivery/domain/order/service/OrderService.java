@@ -21,7 +21,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class OrderService {
-}
     private final OrderRepository orderRepository;
 
     @Transactional
@@ -50,3 +49,15 @@ public class OrderService {
             throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);
         }
     }
+
+    private Order findOrderByIdAndUserId(UUID orderId, Long userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (!order.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.NOT_ORDER_OWNER);
+        }
+
+        return order;
+    }
+}
