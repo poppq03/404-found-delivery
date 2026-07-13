@@ -5,9 +5,15 @@ import com.found404.delivery.domain.store.dto.response.StoreDetailResponse;
 import com.found404.delivery.domain.store.dto.response.StoreSimpleResponse;
 import com.found404.delivery.domain.store.service.StoreService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -20,35 +26,46 @@ public class StoreController {
 
     // 가게 목록 조회
     @GetMapping("/stores")
-    public List<StoreSimpleResponse> getAllStores() {
+    public Slice<StoreSimpleResponse> getAllStores(
+            @PageableDefault(size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
 
-        return null;
+        return storeService.getStores(pageable);
     }
+
 
     // 카테고리 별 가게 목록 조회 ( 디테일 카테고리 X 큰 카테고리로 검색 )
-
     @GetMapping("/stores/{category}")
-    public List<StoreSimpleResponse> getCategoryStores(@PathVariable String category) {
-
-        return null;
+    public Slice<StoreSimpleResponse> getCategoryStores(
+            @PathVariable UUID category,
+            @PageableDefault(size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        return storeService.getStoresByCategory(category, pageable);
     }
 
-    // 키워드 가게 검색 /stores/keyword?=~~~~
+    // 키워드 가게 검색
     @GetMapping("/stores/{keyword}")
-    public List<StoreSimpleResponse> getKeywordStores(@PathVariable String keyword) {
-
-        return null;
+    public Slice<StoreSimpleResponse> getKeywordStores(
+            @PathVariable String keyword,
+            @PageableDefault(size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return storeService.searchStoresByKeyword(keyword,pageable);
     }
 
 
-    // 가게 상세 조회
+     //가게 상세 조회
     @GetMapping("/stores/{storeId}")
     public StoreDetailResponse getStoreDetail(@PathVariable UUID storeId) {
-
-        return null;
+        return storeService.getStoreDetail(storeId);
     }
-
-
 
 
 }
