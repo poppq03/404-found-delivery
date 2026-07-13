@@ -31,3 +31,22 @@ public class OrderService {
 
         return OrderResponseDto.from(saveOrder);
     }
+
+    public Page<OrderListResponseDto> getMyOrders(Long userId, int page, int size) {
+        validatePageSize(size);
+        Pageable pageable = PageRequest.of(page, size);
+
+        return orderRepository.findAllByUserId(userId, pageable)
+                .map(OrderListResponseDto::from);
+    }
+
+    public OrderResponseDto getMyOrder(Long userId, UUID orderId) {
+        Order order = findOrderByIdAndUserId(orderId, userId);
+        return OrderResponseDto.from(order);
+    }
+
+    private void validatePageSize(int size) {
+        if (size != 10 && size != 30 && size != 50) {
+            throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+    }

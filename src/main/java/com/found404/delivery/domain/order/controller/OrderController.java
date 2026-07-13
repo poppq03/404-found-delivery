@@ -39,3 +39,18 @@ public class OrderController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "주문이 생성되었습니다."));
     }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<OrderListResponseDto>>> getMyOrders(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<OrderListResponseDto> response = orderService.getMyOrders(
+                userDetails.getUserId(),
+                page,
+                size
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
