@@ -1,5 +1,7 @@
 package com.found404.delivery.domain.user.service;
 
+import com.found404.delivery.domain.user.dto.LoginRequestDto;
+import com.found404.delivery.domain.user.dto.LoginResponseDto;
 import com.found404.delivery.domain.user.dto.SignupRequestDto;
 import com.found404.delivery.domain.user.dto.SignupResponseDto;
 import com.found404.delivery.domain.user.entity.Role;
@@ -7,6 +9,7 @@ import com.found404.delivery.domain.user.entity.User;
 import com.found404.delivery.domain.user.repository.UserRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
+import com.found404.delivery.global.security.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Transactional
     public SignupResponseDto signup(SignupRequestDto request) {
@@ -39,6 +43,23 @@ public class UserService {
         User savedUser = userRepository.save(user);
 
         return SignupResponseDto.from(savedUser);
+    }
+
+    public LoginResponseDto login(LoginRequestDto request) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        String accessToken = jwtUtil.createToken(
+                user.getId(),
+                user.getUsername(),
+                user.getRole().name()
+        );
+
+        return new LoginResponseDto(accessToken);
     }
 
     private void validateRole(Role role) {
