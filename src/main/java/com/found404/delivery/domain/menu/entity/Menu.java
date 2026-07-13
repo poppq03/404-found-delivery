@@ -63,4 +63,22 @@ public class Menu extends BaseEntity {
         this.displayOrder = displayOrder != null ? displayOrder : 0;
         this.isAiGenerated = isAiGenerated;
     }
+
+    public void update(String name, Integer price, String description, Integer displayOrder, Boolean aiGenerated) {
+        if (name != null) this.name = name;
+        if (price != null) this.price = price;
+        if (description != null) this.description = description;
+        if (displayOrder != null) this.displayOrder = displayOrder;
+        if (aiGenerated != null) this.isAiGenerated = aiGenerated;
+    }
+
+    public void changeStatus(Boolean isHidden, Boolean isSoldOut) {
+        if (isHidden != null) this.isHidden = isHidden;
+        if (isSoldOut != null) this.isSoldOut = isSoldOut;
+    }
+
+    // image URL이 아닌 Key를 저장
+    public void updateImage(String imageKey) {
+        this.imageUrl = imageKey;
+    }
 }

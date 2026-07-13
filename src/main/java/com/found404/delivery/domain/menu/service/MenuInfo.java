@@ -11,6 +11,6 @@ public record MenuInfo(
         String name,
         int price,
         String imageUrl,
-        boolean isHidden,
-        boolean isSoldOut
+        boolean hidden,
+        boolean soldOut
 ) {}
