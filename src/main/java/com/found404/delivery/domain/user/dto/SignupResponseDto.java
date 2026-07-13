@@ -23,7 +23,7 @@ public class SignupResponseDto {
         this.email = email;
         this.nickname = nickname;
         this.role = role;
-        this.createdAt = createdAt;
+        this.createdAt = createdAt; // 회원가입 성공 했다는 의미로...
     }
 
     public static SignupResponseDto from(User user) {
