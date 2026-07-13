@@ -44,6 +44,14 @@ public class OrderService {
         return OrderResponseDto.from(order);
     }
 
+    @Transactional
+    public OrderResponseDto cancelOrder(Long userId, UUID orderId) {
+        Order order = findOrderByIdAndUserId(orderId, userId);
+        order.cancel();
+
+        return OrderResponseDto.from(order);
+    }
+
     private void validatePageSize(int size) {
         if (size != 10 && size != 30 && size != 50) {
             throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);

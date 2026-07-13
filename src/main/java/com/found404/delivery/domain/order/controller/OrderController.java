@@ -21,7 +21,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/api/orders")
 public class OrderController {
-}
 
     private final OrderService orderService;
 
@@ -67,3 +66,17 @@ public class OrderController {
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> cancelOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID orderId
+    ) {
+        OrderResponseDto response = orderService.cancelOrder(
+                userDetails.getUserId(),
+                orderId
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(response, "주문이 취소되었습니다."));
+    }
+}
