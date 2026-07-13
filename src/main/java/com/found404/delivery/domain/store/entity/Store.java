@@ -2,17 +2,16 @@ package com.found404.delivery.domain.store.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
+
 @Table ( name = "p_store" )
 @Getter
+@Entity
 @NoArgsConstructor
 public class Store {
 
@@ -23,8 +22,9 @@ public class Store {
     @Column(name = "owner_id", nullable = false)
     private Integer ownerId;
 
-    @Column(name = "category_id", nullable = false)
-    private UUID categoryId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
     @Column(name = "region_id", nullable = false)
     private UUID regionId;
@@ -50,8 +50,9 @@ public class Store {
     @Column(name = "delivery_fee")
     private Integer deliveryFee;
 
-    @Column
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StoreStatus status;
 
     @Column(name = "is_active")
     private Boolean isActive;
