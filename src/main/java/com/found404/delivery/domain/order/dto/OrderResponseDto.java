@@ -2,9 +2,11 @@ package com.found404.delivery.domain.order.dto;
 
 import com.found404.delivery.domain.order.entity.Order;
 import com.found404.delivery.domain.order.entity.OrderStatus;
+import com.found404.delivery.domain.orderItem.entity.OrderItem;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -25,6 +27,7 @@ public class OrderResponseDto {
     private final String statusReason;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
+    private final List<OrderItemResponseDto> items;
 
 
     public OrderResponseDto(
@@ -42,7 +45,8 @@ public class OrderResponseDto {
             LocalDateTime canceledAt,
             String statusReason,
             LocalDateTime createdAt,
-            LocalDateTime updatedAt
+            LocalDateTime updatedAt,
+            List<OrderItemResponseDto> items
     ) {
         this.orderId = orderId;
         this.storeId = storeId;
@@ -59,9 +63,10 @@ public class OrderResponseDto {
         this.statusReason = statusReason;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.items = items;
     }
 
-    public static OrderResponseDto from(Order order) {
+    public static OrderResponseDto from(Order order, List<OrderItem> orderItems) {
         return new OrderResponseDto(
                 order.getId(),
                 order.getStoreId(),
@@ -77,7 +82,10 @@ public class OrderResponseDto {
                 order.getCanceledAt(),
                 order.getStatusReason(),
                 order.getCreatedAt(),
-                order.getUpdatedAt()
+                order.getUpdatedAt(),
+                orderItems.stream()
+                        .map(OrderItemResponseDto::from)
+                        .toList()
         );
     }
 

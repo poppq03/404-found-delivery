@@ -1,11 +1,11 @@
 package com.found404.delivery.domain.order.entity;
 
+import com.found404.delivery.domain.address.entity.Address;
 import com.found404.delivery.domain.order.dto.OrderRequestDto;
 import com.found404.delivery.global.entity.BaseEntity;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import jakarta.persistence.*;
-import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -71,19 +71,29 @@ public class Order extends BaseEntity {
     @Column(name = "status_reason", length = 255)
     private String statusReason;
 
-    public static Order create(Long userId, @Valid OrderRequestDto request) {
+    public static Order create(
+            Long userId,
+            OrderRequestDto request,
+            Address address,
+            int totalMenuPrice,
+            int deliveryFee,
+            int discountPrice
+    ) {
         Order order = new Order();
         order.userId = userId;
         order.storeId = request.getStoreId();
         order.addressId = request.getAddressId();
-        order.totalMenuPrice = request.getTotalMenuPrice();
-        order.deliveryFee = request.getDeliveryFee();
-        order.discountPrice = request.getDiscountPrice();
-        order.totalPrice = request.getTotalPrice();
-        order.deliveryAddress = request.getDeliveryAddress();
-        order.deliveryDetailAddress = request.getDeliveryDetailAddress();
-        order.deliveryRequest = request.getDeliveryRequest();
         order.status = OrderStatus.REQUESTED;
+
+        order.totalMenuPrice = totalMenuPrice;
+        order.deliveryFee = deliveryFee;
+        order.discountPrice = discountPrice;
+        order.totalPrice = totalMenuPrice + deliveryFee - discountPrice;
+
+        order.deliveryAddress = address.getAddress();
+        order.deliveryDetailAddress = address.getDetailAddress();
+        order.deliveryRequest = request.getDeliveryRequest();
+
         return order;
     }
 
