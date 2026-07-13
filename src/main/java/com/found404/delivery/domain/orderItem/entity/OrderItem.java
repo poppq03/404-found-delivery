@@ -43,4 +43,17 @@ public class OrderItem extends BaseEntity {
 
     @Column(name = "total_price", nullable = false)
     private int totalPrice;
+
+    public static OrderItem create(
+            UUID orderId, UUID menuId, String menuName, int menuPrice, int quantity
+    ) {
+        OrderItem orderItem = new OrderItem();
+        orderItem.orderId = orderId;
+        orderItem.menuId = menuId;
+        orderItem.menuName = menuName;
+        orderItem.menuPrice = menuPrice;
+        orderItem.quantity = quantity;
+        orderItem.totalPrice = menuPrice * quantity;
+        return orderItem;
+    }
 }
