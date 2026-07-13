@@ -6,6 +6,7 @@ import com.found404.delivery.domain.menu.repository.MenuRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import com.found404.delivery.global.storage.ImageStorage;
+import com.found404.delivery.global.transaction.AfterCommitExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,9 +28,7 @@ public class MenuService {
     private final MenuRepository menuRepository;
     private final StoreOwnershipChecker storeOwnershipChecker; // TODO: Store 연동 전 현재는 [TEMP] 주입
     private final ImageStorage imageStorage;
-
-    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-    private static final Set<String> ALLOWED_EXT = Set.of("jpg", "jpeg", "png", "webp");
+    private final AfterCommitExecutor afterCommitExecutor;
 
     // 정렬 허용 필드 (그 외 값은 기본값)
     private static final Set<String> ALLOWED_SORT = Set.of("createdAt", "displayOrder");
@@ -43,7 +42,7 @@ public class MenuService {
         // save 전에 검증 (확장자만 받아둠)
         String ext = null;
         if (image != null && !image.isEmpty()) {
-            ext = validateImage(image);
+            ext = imageStorage.validateImage(image);
         }
 
         Menu menu = Menu.builder()
@@ -130,26 +129,29 @@ public class MenuService {
 
         validateOwnerAccess(role, userId, menu.getStoreId());
 
-        menu.update(request.getName(), request.getPrice(), request.getDescription(), request.getDisplayOrder(), request.getAiGenerated());
+        menu.update(request.getName(), request.getPrice(), request.getDescription(),
+                request.getDisplayOrder(), request.getAiGenerated());
 
-        // 이미지 교체 또는 제거 시 기존 S3 파일 삭제
         if (image != null && !image.isEmpty()) {
-            String ext = validateImage(image);
+            String ext = imageStorage.validateImage(image);
             String newKey = menuImageKey(menu.getId(), ext);
             String oldKey = menu.getImageUrl();
 
             imageStorage.upload(newKey, image);
-            // 확장자 달라진 경우 기존 파일 제거
-            if (oldKey != null && !oldKey.equals(newKey)) {
-                imageStorage.delete(oldKey);
-            }
             menu.updateImage(newKey);
+
+            // 트랜잭션 커밋 후 기존 이미지 삭제 (확장자가 바뀐 경우)
+            if (oldKey != null && !oldKey.equals(newKey)) {
+                afterCommitExecutor.execute(() -> imageStorage.delete(oldKey));
+            }
         } else if (Boolean.TRUE.equals(request.getRemoveImage())) {
             String oldKey = menu.getImageUrl();
-            if (oldKey != null) {
-                imageStorage.delete(oldKey);
-            }
             menu.updateImage(null);
+
+            // 트랜잭션 커밋 후 기존 이미지 삭제
+            if (oldKey != null) {
+                afterCommitExecutor.execute(() -> imageStorage.delete(oldKey));
+            }
         }
 
         return MenuUpdateResponseDto.from(menu, resolveImageUrl(menu));
@@ -174,7 +176,7 @@ public class MenuService {
 
         validateOwnerAccess(role, userId, menu.getStoreId());
 
-        menu.markDeleted(userId);
+        menu.markDeleted(userId); // soft delete, S3 파일도 삭제되지 않음
 
         return MenuDeleteResponseDto.from(menu);
     }
@@ -195,16 +197,6 @@ public class MenuService {
     // DB에 저장된 S3 key → URL 변환, 이미지 없을 시 null
     private String resolveImageUrl(Menu menu) {
         return imageStorage.toUrlOrNull(menu.getImageUrl());
-    }
-
-    // image file 크기, 확장자 검증
-    private String validateImage(MultipartFile file) {
-        if (file.getSize() > MAX_IMAGE_SIZE) throw new CustomException(ErrorCode.FILE_TOO_LARGE);
-        String name = file.getOriginalFilename();
-        String ext = (name != null && name.contains("."))
-                ? name.substring(name.lastIndexOf('.') + 1).toLowerCase() : "";
-        if (!ALLOWED_EXT.contains(ext)) throw new CustomException(ErrorCode.UNSUPPORTED_FILE_TYPE);
-        return ext;
     }
 
     // OWNER + 본인 소유 가게 검증 TEMP
