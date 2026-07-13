@@ -3,9 +3,11 @@ package com.found404.delivery.global.storage;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -13,6 +15,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class S3ImageStorage implements ImageStorage {
@@ -34,14 +37,18 @@ public class S3ImageStorage implements ImageStorage {
                 .build();
         try {
             s3Client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-        } catch (IOException e) {
+        } catch (IOException | SdkException e) {
             throw new CustomException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
     }
 
     @Override
     public void delete(String key) {
-        s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build());
+        try {
+            s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build());
+        } catch (SdkException e) {
+            log.warn("기존 S3 이미지 삭제 실패 - 버킷에 파일이 남아있을 수 있습니다: key={}", key, e);
+        }
     }
 
     @Override
