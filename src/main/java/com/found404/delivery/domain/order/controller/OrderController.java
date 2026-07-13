@@ -1,4 +1,41 @@
 package com.found404.delivery.domain.order.controller;
 
+import com.found404.delivery.domain.order.dto.OrderListResponseDto;
+import com.found404.delivery.domain.order.dto.OrderRequestDto;
+import com.found404.delivery.domain.order.dto.OrderResponseDto;
+import com.found404.delivery.domain.order.service.OrderService;
+import com.found404.delivery.global.response.ApiResponse;
+import com.found404.delivery.global.security.CustomUserDetails;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@Controller
+@RequiredArgsConstructor
+@RequestMapping("/api/orders")
 public class OrderController {
 }
+
+    private final OrderService orderService;
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<OrderResponseDto>> createOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody OrderRequestDto request
+    ) {
+        OrderResponseDto response = orderService.createOrder(
+                userDetails.getUserId(),
+                request
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response, "주문이 생성되었습니다."));
+    }

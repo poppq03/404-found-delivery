@@ -1,7 +1,11 @@
 package com.found404.delivery.domain.order.entity;
 
+import com.found404.delivery.domain.order.dto.OrderRequestDto;
 import com.found404.delivery.global.entity.BaseEntity;
+import com.found404.delivery.global.exception.CustomException;
+import com.found404.delivery.global.exception.ErrorCode;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -66,4 +70,28 @@ public class Order extends BaseEntity {
 
     @Column(name = "status_reason", length = 255)
     private String statusReason;
+
+    public static Order create(Long userId, @Valid OrderRequestDto request) {
+        Order order = new Order();
+        order.userId = userId;
+        order.storeId = request.getStoreId();
+        order.addressId = request.getAddressId();
+        order.totalMenuPrice = request.getTotalMenuPrice();
+        order.deliveryFee = request.getDeliveryFee();
+        order.discountPrice = request.getDiscountPrice();
+        order.totalPrice = request.getTotalPrice();
+        order.deliveryAddress = request.getDeliveryAddress();
+        order.deliveryDetailAddress = request.getDeliveryDetailAddress();
+        order.deliveryRequest = request.getDeliveryRequest();
+        order.status = OrderStatus.REQUESTED;
+        return order;
+    }
+
+    public void cancel() {
+        if (this.status != OrderStatus.REQUESTED) {
+            throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.status = OrderStatus.CANCELED;
+        this.canceledAt = LocalDateTime.now();
+    }
 }
