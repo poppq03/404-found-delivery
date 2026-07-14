@@ -64,13 +64,25 @@ public class Cart {
         this.storeId = storeId;
     }
 
-    public void addItem(CartItem item) {
-        items.add(item);
-        item.assignCart(this);
+    public void addItem(UUID menuId, int quantity, UUID storeId) {
+        if (this.storeId == null) {
+            this.storeId = storeId;
+        }
+        CartItem existing = findItem(menuId);
+        if (existing != null) {
+            existing.addQuantity(quantity);
+        } else {
+            CartItem item = CartItem.builder().menuId(menuId).quantity(quantity).build();
+            this.items.add(item);
+            item.assignCart(this);
+        }
     }
 
-    public void changeStore(UUID storeId) {
-        this.storeId = storeId;
+    private CartItem findItem(UUID menuId) {
+        return this.items.stream()
+                .filter(item -> item.getMenuId().equals(menuId))
+                .findFirst()
+                .orElse(null);
     }
 
     public void clearCart() {

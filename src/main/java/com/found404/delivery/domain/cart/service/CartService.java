@@ -1,5 +1,6 @@
 package com.found404.delivery.domain.cart.service;
 
+import com.found404.delivery.domain.cart.dto.CartAddRequestDto;
 import com.found404.delivery.domain.cart.dto.CartResponseDto;
 import com.found404.delivery.domain.cart.entity.Cart;
 import com.found404.delivery.domain.cart.repository.CartRepository;
@@ -26,12 +27,43 @@ public class CartService {
 
     @Transactional(readOnly = true)
     public CartResponseDto getCart(Long userId, String role) {
+
         validateCustomerAccess(role);
+
         return cartRepository.findByUserId(userId)
                 .map(cart -> buildCartResponse(cart, null))
                 .orElseGet(this::emptyCartResponse);
     }
 
+    @Transactional
+    public CartResponseDto addItem(Long userId, String role, CartAddRequestDto request) {
+
+        validateCustomerAccess(role);
+
+        // 메뉴 검증
+        MenuInfo menu = menuQueryService.getMenuInfo(request.getMenuId());
+        if (menu.isHidden() || menu.isSoldOut()) {
+            throw new CustomException(ErrorCode.MENU_UNAVAILABLE);
+        }
+
+        // 수량 검증
+        if (request.getQuantity() < 1) {
+            throw new CustomException(ErrorCode.INVALID_QUANTITY);
+        }
+
+        Cart cart = getOrCreateCart(userId);
+
+        // 장바구니 교체 (인당 한 가게에 대한 장바구니만)
+        boolean storeReplaced = false;
+        if (cart.getStoreId() != null && !cart.getStoreId().equals(menu.storeId())) {
+            cart.clearCart();
+            storeReplaced = true;
+        }
+
+        cart.addItem(menu.menuId(), request.getQuantity(), menu.storeId());
+
+        return buildCartResponse(cart, storeReplaced);
+    }
     private CartResponseDto buildCartResponse(Cart cart, Boolean storeReplaced) {
         List<UUID> menuIds = cart.getItems().stream()
                 .map(CartItem::getMenuId)
@@ -61,6 +93,12 @@ public class CartService {
     private CartResponseDto emptyCartResponse() {
         return new CartResponseDto(null, null, null,
                 null, null, List.of(), 0, 0);
+    }
+
+    private Cart getOrCreateCart(Long userId) {
+        return cartRepository.findByUserId(userId)
+                .orElseGet(() -> cartRepository.save(
+                        Cart.builder().userId(userId).build()));
     }
 
     // CUSTOMER 권한 TEMP

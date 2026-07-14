@@ -1,7 +1,6 @@
 package com.found404.delivery.domain.cart.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.found404.delivery.domain.cartitem.entity.CartItem;
 import com.found404.delivery.domain.menu.service.MenuInfo;
 import lombok.Getter;
@@ -46,20 +45,20 @@ public class CartResponseDto {
         private final int menuPrice;
         private final int quantity;
         private final int itemTotalPrice;
-        @JsonProperty("isSoldOut") private final boolean isSoldOut;
-        @JsonProperty("isHidden")  private final boolean isHidden;
+        private final boolean soldOut;
+        private final boolean hidden;
         private final String imageUrl;
 
         public Item(UUID cartItemId, UUID menuId, String menuName, int menuPrice, int quantity,
-                    int itemTotalPrice, boolean isSoldOut, boolean isHidden, String imageUrl) {
+                    int itemTotalPrice, boolean soldOut, boolean hidden, String imageUrl) {
             this.cartItemId = cartItemId;
             this.menuId = menuId;
             this.menuName = menuName;
             this.menuPrice = menuPrice;
             this.quantity = quantity;
             this.itemTotalPrice = itemTotalPrice;
-            this.isSoldOut = isSoldOut;
-            this.isHidden = isHidden;
+            this.soldOut = soldOut;
+            this.hidden = hidden;
             this.imageUrl = imageUrl;
         }
 
