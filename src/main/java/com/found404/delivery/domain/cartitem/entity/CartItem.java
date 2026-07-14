@@ -1,5 +1,6 @@
 package com.found404.delivery.domain.cartitem.entity;
 
+import com.found404.delivery.domain.cart.entity.Cart;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -33,8 +34,9 @@ public class CartItem {
     @Column(name = "cart_item_id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "cart_id", nullable = false)
-    private UUID cartId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
 
     @Column(name = "menu_id", nullable = false)
     private UUID menuId;
@@ -59,9 +61,20 @@ public class CartItem {
     private Long updatedBy;
 
     @Builder
-    private CartItem(UUID cartId, UUID menuId, int quantity) {
-        this.cartId = cartId;
+    private CartItem(UUID menuId, int quantity) {
         this.menuId = menuId;
+        this.quantity = quantity;
+    }
+
+    public void assignCart(Cart cart) {
+        this.cart = cart;
+    }
+
+    public void addQuantity(int amount) {
+        this.quantity += amount;
+    }
+
+    public void changeQuantity(int quantity) {
         this.quantity = quantity;
     }
 }
