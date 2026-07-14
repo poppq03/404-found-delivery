@@ -1,9 +1,6 @@
 package com.found404.delivery.domain.user.service;
 
-import com.found404.delivery.domain.user.dto.LoginRequestDto;
-import com.found404.delivery.domain.user.dto.LoginResponseDto;
-import com.found404.delivery.domain.user.dto.SignupRequestDto;
-import com.found404.delivery.domain.user.dto.SignupResponseDto;
+import com.found404.delivery.domain.user.dto.*;
 import com.found404.delivery.domain.user.entity.Role;
 import com.found404.delivery.domain.user.entity.User;
 import com.found404.delivery.domain.user.repository.UserRepository;
@@ -61,6 +58,29 @@ public class UserService {
         );
 
         return new LoginResponseDto(accessToken);
+    }
+
+    // 내 정보 조회
+    public UserResponseDto getMyInfo(Long userId) {
+        User user = getUserOrThrow(userId);
+        return UserResponseDto.from(user);
+    }
+
+    // 내 정보(닉네임/전화번호/프로필이미지) 수정
+    @Transactional
+    public UserResponseDto updateMyInfo(Long userId, UserUpdateRequestDto request) {
+        User user = getUserOrThrow(userId);
+
+        user.updateProfile(request.getNickname(), request.getPhone(), request.getProfileImage());
+
+        return UserResponseDto.from(user);
+    }
+
+    // 공통: userId로 유저 조회, 없으면(또는 이미 탈퇴됐으면 @SQLRestriction에 의해 조회 안 됨) 404
+    // 다음 PR(비밀번호 변경/탈퇴)에서도 재사용 예정
+    private User getUserOrThrow(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private void validateRole(Role role) {
