@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class StoreUpdateRequest {
+public class StoreCreateRequestDto {
+    // UUID 값은 자동생성이니 필요 X
 
     @NotBlank
     private String name;    // Store name
@@ -34,10 +35,9 @@ public class StoreUpdateRequest {
     private Integer deliveryFee; //배달비
 
     @NotBlank
-    private String updateBy; // 생성자
+    private String createdBy; // 생성자
 
-
-    @NotBlank
-    private String deletedBy; //삭제자
+    // 대표이미지를 어케할까 고민중 ..흠
+    //private MultipartFile imageUrl;
 
 }

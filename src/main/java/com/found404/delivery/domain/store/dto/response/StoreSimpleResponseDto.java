@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Getter
 @Builder
-public class StoreSimpleResponse {
+public class StoreSimpleResponseDto {
 
     private UUID storeId;
 
@@ -27,8 +27,8 @@ public class StoreSimpleResponse {
 
     //가게 목록
 
-    public static StoreSimpleResponse from (Store store) {
-        return StoreSimpleResponse.builder()
+    public static StoreSimpleResponseDto from (Store store) {
+        return StoreSimpleResponseDto.builder()
                 .storeId(store.getStoreId())
                 .name(store.getName())
                 .deliveryFee(store.getDeliveryFee())

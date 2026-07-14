@@ -1,9 +1,9 @@
 package com.found404.delivery.domain.store.controller;
 
 import com.found404.delivery.domain.store.dto.request.*;
-import com.found404.delivery.domain.store.dto.response.StoreDetailResponse;
-import com.found404.delivery.domain.store.dto.response.StoreImageUpdateResponse;
-import com.found404.delivery.domain.store.dto.response.StoreStatusResponse;
+import com.found404.delivery.domain.store.dto.response.StoreDetailResponseDto;
+import com.found404.delivery.domain.store.dto.response.StoreImageUpdateResponseDto;
+import com.found404.delivery.domain.store.dto.response.StoreStatusResponseDto;
 import com.found404.delivery.domain.store.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -22,50 +22,50 @@ public class StoreOwnerController {
 
     // 가게 등록
     @PostMapping("/stores")
-    public StoreDetailResponse createStore(@RequestBody StoreCreateRequest request){
+    public StoreDetailResponseDto createStore(@RequestBody StoreCreateRequestDto request){
         return null;
     }
 
     // 가게 수정
     @PatchMapping("/stores/{storeId}")
-    public StoreUpdateRequest updateStore(@PathVariable UUID storeId, @RequestBody StoreUpdateRequest request){
+    public StoreUpdateRequestDto updateStore(@PathVariable UUID storeId, @RequestBody StoreUpdateRequestDto request){
 
         return null;
     }
 
     // 가게 삭제
     @DeleteMapping("/stores/{storeId}")
-    public StoreStatusResponse deleteStore(){
+    public StoreStatusResponseDto deleteStore(){
 
         return null;
     }
 
     // 영업상태 변경
     @PatchMapping("/stores/{storeId}/status")
-    public StoreStatusResponse updateStoreStatus(@PathVariable UUID storeId, @RequestBody StoreStatusRequest request){
+    public StoreStatusResponseDto updateStoreStatus(@PathVariable UUID storeId, @RequestBody StoreStatusRequestDto request){
         return null;
     }
 
     // 영업 Open
     @PatchMapping("/stores/{storeId}/open")
-    public StoreStatusResponse openStore(@PathVariable UUID storeId, @RequestBody StoreStatusRequest request){
+    public StoreStatusResponseDto openStore(@PathVariable UUID storeId, @RequestBody StoreStatusRequestDto request){
         return null;
     }
     // 영업 Close
     @PatchMapping("/stores/{storeId}/close")
-    public StoreStatusResponse closeStore(@PathVariable UUID storeId, @RequestBody StoreStatusRequest request){
+    public StoreStatusResponseDto closeStore(@PathVariable UUID storeId, @RequestBody StoreStatusRequestDto request){
         return null;
     }
 
     // 최소 주문 금액 수정
     @PatchMapping("/stores/{storeId}/minimumOrderPrice")
-    public StoreDetailResponse updateMinOrderPrice(@PathVariable UUID storeId, @RequestBody MinOrderPriceUpdateRequest request){
+    public StoreDetailResponseDto updateMinOrderPrice(@PathVariable UUID storeId, @RequestBody MinOrderPriceUpdateRequestDto request){
         return null;
     }
 
     // 가게 이미지 변경
     @PatchMapping("/stores/{storeId}/image")
-    public StoreImageUpdateResponse updateStoreImage(
+    public StoreImageUpdateResponseDto updateStoreImage(
             @PathVariable UUID storeId,
             @RequestParam MultipartFile image){
         return null;
@@ -75,7 +75,7 @@ public class StoreOwnerController {
 
     // 배달비 수정
     @PatchMapping
-    public StoreDetailResponse updateDeliveryFee(@PathVariable UUID storeId, DeliveryFeeUpdateRequest request){
+    public StoreDetailResponseDto updateDeliveryFee(@PathVariable UUID storeId, DeliveryFeeUpdateRequestDto request){
         return null;
     }
 

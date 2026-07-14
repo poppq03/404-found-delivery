@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class StoreSearchRequest {
+public class DeliveryFeeUpdateRequestDto {
 
-
+    private Integer deliveryFee;
 }

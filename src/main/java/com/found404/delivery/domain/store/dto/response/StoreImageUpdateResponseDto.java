@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class StoreImageUpdateResponse {
+public class StoreImageUpdateResponseDto {
     private String imageUrl;
     private String message;
 }

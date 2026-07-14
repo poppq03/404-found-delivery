@@ -1,5 +1,6 @@
 package com.found404.delivery.global.config;
 
+import com.found404.delivery.domain.user.repository.UserRepository;
 import com.found404.delivery.global.security.jwt.JwtAuthenticationFilter;
 import com.found404.delivery.global.security.jwt.JwtUtil;
 import org.springframework.context.annotation.Bean;
@@ -18,9 +19,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
-    public SecurityConfig(JwtUtil jwtUtil) {
+    public SecurityConfig(JwtUtil jwtUtil, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
     }
 
     @Bean
@@ -49,7 +52,7 @@ public class SecurityConfig {
 
                 // 우리가 만든 JWT 필터를, 원래 있던 로그인 필터 자리보다 앞에 끼워넣기
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtUtil),
+                        new JwtAuthenticationFilter(jwtUtil, userRepository),
                         UsernamePasswordAuthenticationFilter.class
                 );
 

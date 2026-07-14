@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class MinOrderPriceUpdateRequest {
+public class MinOrderPriceUpdateRequestDto {
 
     @NotNull
     @Min(0)
