@@ -42,4 +42,16 @@ public class AdminOrderController {
                 orderService.getAdminOrder(userDetails.getRole(), orderId)
         ));
     }
+
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> changeAdminOrderStatus(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID orderId,
+            @Valid @RequestBody OrderStatusUpdateRequestDto request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.changeAdminOrderStatus(userDetails.getRole(), orderId, request),
+                "주문 상태가 변경되었습니다."
+        ));
+    }
 }

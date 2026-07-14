@@ -236,6 +236,18 @@ public class OrderService {
 
         return OrderResponseDto.from(order, orderItems);
     }
+
+    @Transactional
+    public OrderResponseDto changeAdminOrderStatus(String role, UUID orderId, @Valid OrderStatusUpdateRequestDto request) {
+        validateAdminRole(role);
+
+        Order order = findOrderById(orderId);
+        order.changeAdminStatus(request.getStatus());
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+        return OrderResponseDto.from(order, orderItems);
+    }
+
     private void validateAdminRole(String role) {
         if (!"MANAGER".equals(role) && !"MASTER".equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
