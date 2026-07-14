@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class StoreStatusRequest {
+public class StoreStatusRequestDto {
 
     private StoreStatus status;
 

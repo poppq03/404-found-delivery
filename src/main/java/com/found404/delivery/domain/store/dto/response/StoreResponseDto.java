@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Getter
 @Builder
-public class StoreResponse {
+public class StoreResponseDto {
 
     private UUID storeId;
     private String name;

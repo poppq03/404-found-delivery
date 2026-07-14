@@ -4,12 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @NoArgsConstructor
-public class StoreCreateRequest {
-    // UUID 값은 자동생성이니 필요 X
+public class StoreUpdateRequestDto {
 
     @NotBlank
     private String name;    // Store name
@@ -36,9 +34,10 @@ public class StoreCreateRequest {
     private Integer deliveryFee; //배달비
 
     @NotBlank
-    private String createdBy; // 생성자
+    private String updateBy; // 생성자
 
-    // 대표이미지를 어케할까 고민중 ..흠
-    //private MultipartFile imageUrl;
+
+    @NotBlank
+    private String deletedBy; //삭제자
 
 }

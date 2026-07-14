@@ -1,8 +1,8 @@
 package com.found404.delivery.domain.store.controller;
 
 
-import com.found404.delivery.domain.store.dto.response.StoreDetailResponse;
-import com.found404.delivery.domain.store.dto.response.StoreSimpleResponse;
+import com.found404.delivery.domain.store.dto.response.StoreDetailResponseDto;
+import com.found404.delivery.domain.store.dto.response.StoreSimpleResponseDto;
 import com.found404.delivery.domain.store.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +26,7 @@ public class StoreController {
 
     // 가게 목록 조회
     @GetMapping("/stores")
-    public Slice<StoreSimpleResponse> getAllStores(
+    public Slice<StoreSimpleResponseDto> getAllStores(
             @PageableDefault(size = 20,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
@@ -39,7 +39,7 @@ public class StoreController {
 
     // 카테고리 별 가게 목록 조회 ( 디테일 카테고리 X 큰 카테고리로 검색 )
     @GetMapping("/stores/{category}")
-    public Slice<StoreSimpleResponse> getCategoryStores(
+    public Slice<StoreSimpleResponseDto> getCategoryStores(
             @PathVariable UUID category,
             @PageableDefault(size = 20,
                     sort = "createdAt",
@@ -51,7 +51,7 @@ public class StoreController {
 
     // 키워드 가게 검색
     @GetMapping("/stores/{keyword}")
-    public Slice<StoreSimpleResponse> getKeywordStores(
+    public Slice<StoreSimpleResponseDto> getKeywordStores(
             @PathVariable String keyword,
             @PageableDefault(size = 20,
                     sort = "createdAt",
@@ -63,7 +63,7 @@ public class StoreController {
 
      //가게 상세 조회
     @GetMapping("/stores/{storeId}")
-    public StoreDetailResponse getStoreDetail(@PathVariable UUID storeId) {
+    public StoreDetailResponseDto getStoreDetail(@PathVariable UUID storeId) {
         return storeService.getStoreDetail(storeId);
     }
 
