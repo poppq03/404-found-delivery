@@ -8,6 +8,7 @@ import com.found404.delivery.domain.order.dto.OrderItemRequestDto;
 import com.found404.delivery.domain.order.dto.OrderListResponseDto;
 import com.found404.delivery.domain.order.dto.OrderRequestDto;
 import com.found404.delivery.domain.order.dto.OrderResponseDto;
+import com.found404.delivery.domain.order.dto.*;
 import com.found404.delivery.domain.order.entity.Order;
 import com.found404.delivery.domain.order.repository.OrderRepository;
 import com.found404.delivery.domain.orderItem.entity.OrderItem;
@@ -16,6 +17,7 @@ import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.atn.SemanticContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -134,6 +136,7 @@ public class OrderService {
             }
 
             if (menuInfo.hidden() || menuInfo.soldOut()) {
+            if (menuInfo.isHidden() || menuInfo.isSoldOut()) {
                 throw new CustomException(ErrorCode.MENU_UNAVAILABLE);
             }
         }
@@ -157,5 +160,21 @@ public class OrderService {
         }
 
         return order;
+    }
+
+    public Page<OrderListResponseDto> getMyStoreOrders(String role, UUID storeId, int page, int size) {
+        validateOwnerRole(role);
+        validatePageSize(size);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return orderRepository.findAllByStoreId(storeId, pageable)
+                .map(OrderListResponseDto::from);
+    }
+
+    private void validateOwnerRole(String role) {
+        if (!"OWNER".equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_ROLE);
+        }
     }
 }
