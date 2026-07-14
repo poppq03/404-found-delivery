@@ -206,4 +206,15 @@ public class OrderService {
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
         return OrderResponseDto.from(order, orderItems);
     }
+
+    @Transactional
+    public OrderResponseDto changeOwnerOrderStatus(String role, UUID orderId, OrderStatusUpdateRequestDto request) {
+        validateOwnerRole(role);
+
+        Order order = findOrderById(orderId);
+        order.changeOwnerStatus(request.getStatus());
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+        return OrderResponseDto.from(order, orderItems);
+    }
 }

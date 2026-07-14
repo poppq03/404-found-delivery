@@ -68,3 +68,16 @@ public class OwnerOrderController {
                 , "주문이 거절 되었습니다."
         ));
     }
+
+    @PatchMapping("/orders/{orderId}/status")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> changeOrderStatus(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID orderId,
+            @Valid @RequestBody OrderStatusUpdateRequestDto request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.changeOwnerOrderStatus(userDetails.getRole(), orderId, request),
+                "주문 상태가 변경되었습니다."
+        ));
+    }
+}

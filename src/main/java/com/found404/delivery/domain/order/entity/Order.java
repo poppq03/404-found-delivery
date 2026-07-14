@@ -119,4 +119,16 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.REJECTED;
         this.statusReason = reason;
     }
+
+    public void changeOwnerStatus(OrderStatus nextStatus) {
+        boolean validTransition =
+                (this.status == OrderStatus.ACCEPTED && nextStatus == OrderStatus.COOKING)
+                || (this.status == OrderStatus.COOKING && nextStatus == OrderStatus.DELIVERING)
+                || (this.status == OrderStatus.DELIVERING && nextStatus == OrderStatus.COMPLETED);
+
+        if (!validTransition) {
+            throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.status = nextStatus;
+    }
 }
