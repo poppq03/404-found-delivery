@@ -45,3 +45,14 @@ public class OwnerOrderController {
                 orderService.getOwnerOrder(userDetails.getRole(), orderId)
         ));
     }
+
+    @PatchMapping("/orders/{orderId}/accept")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> acceptOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID orderId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.acceptOrder(userDetails.getRole(), orderId),
+                "주문이 수락되었습니다."
+        ));
+    }

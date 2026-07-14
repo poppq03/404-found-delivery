@@ -186,4 +186,13 @@ public class OrderService {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
     }
+
+    @Transactional
+    public OrderResponseDto acceptOrder(String role, UUID orderId) {
+        validateOwnerRole(role);
+        Order order = findOrderById(orderId);
+        order.accept();
+
+        return OrderResponseDto.from(order, orderItemRepository.findAllByOrderId(orderId));
+    }
 }

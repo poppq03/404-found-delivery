@@ -104,4 +104,11 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.CANCELED;
         this.canceledAt = LocalDateTime.now();
     }
+
+    public void accept() {
+        if (this.status != OrderStatus.REQUESTED) {
+            throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.status = OrderStatus.ACCEPTED;
+    }
 }
