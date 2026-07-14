@@ -4,7 +4,9 @@ import com.found404.delivery.domain.cart.dto.CartAddRequestDto;
 import com.found404.delivery.domain.cart.dto.CartResponseDto;
 import com.found404.delivery.domain.cart.entity.Cart;
 import com.found404.delivery.domain.cart.repository.CartRepository;
+import com.found404.delivery.domain.cartitem.dto.CartItemQuantityRequestDto;
 import com.found404.delivery.domain.cartitem.entity.CartItem;
+import com.found404.delivery.domain.cartitem.repository.CartItemRepository;
 import com.found404.delivery.domain.menu.service.MenuInfo;
 import com.found404.delivery.domain.menu.service.MenuQueryService;
 import com.found404.delivery.global.exception.CustomException;
@@ -23,7 +25,9 @@ import java.util.UUID;
 public class CartService {
 
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final MenuQueryService menuQueryService;
+
 
     @Transactional(readOnly = true)
     public CartResponseDto getCart(Long userId, String role) {
@@ -63,6 +67,34 @@ public class CartService {
         cart.addItem(menu.menuId(), request.getQuantity(), menu.storeId());
 
         return buildCartResponse(cart, storeReplaced);
+    }
+
+    @Transactional
+    public CartResponseDto changeQuantity(Long userId, String role, UUID cartItemId, CartItemQuantityRequestDto request) {
+
+        validateCustomerAccess(role);
+
+        // 수량 검증
+        if (request.getQuantity() < 1) {
+            throw new CustomException(ErrorCode.INVALID_QUANTITY);
+        }
+
+        // 본인 장바구니 확인
+        CartItem cartItem = getCartItemOrThrow(cartItemId, userId);
+
+        cartItem.changeQuantity(request.getQuantity());
+
+        return buildCartResponse(cartItem.getCart(), null);
+    }
+
+    private CartItem getCartItemOrThrow(UUID cartItemId, Long userId) {
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CART_ITEM_NOT_FOUND));
+
+        if (!cartItem.getCart().getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.CART_ITEM_NOT_FOUND);
+        }
+        return cartItem;
     }
     private CartResponseDto buildCartResponse(Cart cart, Boolean storeReplaced) {
         List<UUID> menuIds = cart.getItems().stream()
