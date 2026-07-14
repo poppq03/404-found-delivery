@@ -195,4 +195,15 @@ public class OrderService {
 
         return OrderResponseDto.from(order, orderItemRepository.findAllByOrderId(orderId));
     }
+
+    @Transactional
+    public OrderResponseDto rejectOrder(String role, UUID orderId, OrderRejectRequestDto request) {
+        validateOwnerRole(role);
+
+        Order order = findOrderById(orderId);
+        order.reject(request.getReason());
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+        return OrderResponseDto.from(order, orderItems);
+    }
 }

@@ -56,3 +56,15 @@ public class OwnerOrderController {
                 "주문이 수락되었습니다."
         ));
     }
+
+    @PatchMapping("/orders/{orderId}/reject")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> rejectOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID orderId,
+            @Valid @RequestBody OrderRejectRequestDto request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.rejectOrder(userDetails.getRole(), orderId, request)
+                , "주문이 거절 되었습니다."
+        ));
+    }

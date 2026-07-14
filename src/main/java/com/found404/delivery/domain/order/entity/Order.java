@@ -111,4 +111,12 @@ public class Order extends BaseEntity {
         }
         this.status = OrderStatus.ACCEPTED;
     }
+
+    public void reject(String reason) {
+        if (this.status != OrderStatus.REQUESTED) {
+            throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.status = OrderStatus.REJECTED;
+        this.statusReason = reason;
+    }
 }
