@@ -86,4 +86,11 @@ public class User extends BaseEntity {
             this.profileImage = profileImage;
         }
     }
+
+    // 비밀번호는 이미 암호화된 값만 받는다
+    // role 변경,탈퇴와 달리 tokenVersion은 증가시키지 않음
+    public void changePassword(String encodedNewPassword) {
+        this.password = encodedNewPassword;
+        this.tokenVersion++;
+    }
 }

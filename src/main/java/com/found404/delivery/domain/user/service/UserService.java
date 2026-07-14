@@ -76,8 +76,31 @@ public class UserService {
         return UserResponseDto.from(user);
     }
 
+    // 비밀번호 변경 (본인 확인용 현재 비밀번호 필수)
+    @Transactional
+    public void changePassword(Long userId, PasswordUpdateRequestDto request) {
+        User user = getUserOrThrow(userId);
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_CURRENT_PASSWORD);
+        }
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.SAME_AS_OLD_PASSWORD);
+        }
+
+        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        user.changePassword(encodedNewPassword);
+    }
+
+    // 회원 탈퇴 (Soft Delete). tokenVersion도 같이 증가해서 기존 토큰을 즉시 무효화한다.
+    @Transactional
+    public void withdraw(Long userId) {
+        User user = getUserOrThrow(userId);
+        user.withdraw(userId);
+    }
+
+
     // 공통: userId로 유저 조회, 없으면(또는 이미 탈퇴됐으면 @SQLRestriction에 의해 조회 안 됨) 404
-    // 다음 PR(비밀번호 변경/탈퇴)에서도 재사용 예정
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
