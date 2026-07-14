@@ -88,7 +88,8 @@ public class User extends BaseEntity {
     }
 
     // 비밀번호는 이미 암호화된 값만 받는다
-    // role 변경,탈퇴와 달리 tokenVersion은 증가시키지 않음
+    // 혹시 모를 공격자의 세션을 끊기 위해 비밀번호 변경 시,
+    // role 변경/탈퇴와 마찬가지로 tokenVersion을 증가시킴
     public void changePassword(String encodedNewPassword) {
         this.password = encodedNewPassword;
         this.tokenVersion++;
