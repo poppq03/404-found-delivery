@@ -4,10 +4,7 @@ import com.found404.delivery.domain.address.entity.Address;
 import com.found404.delivery.domain.address.repository.AddressRepository;
 import com.found404.delivery.domain.menu.service.MenuInfo;
 import com.found404.delivery.domain.menu.service.MenuQueryService;
-import com.found404.delivery.domain.order.dto.OrderItemRequestDto;
-import com.found404.delivery.domain.order.dto.OrderListResponseDto;
-import com.found404.delivery.domain.order.dto.OrderRequestDto;
-import com.found404.delivery.domain.order.dto.OrderResponseDto;
+import com.found404.delivery.domain.order.dto.*;
 import com.found404.delivery.domain.order.entity.Order;
 import com.found404.delivery.domain.order.repository.OrderRepository;
 import com.found404.delivery.domain.orderItem.entity.OrderItem;
@@ -16,6 +13,7 @@ import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.atn.SemanticContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -157,5 +155,66 @@ public class OrderService {
         }
 
         return order;
+    }
+
+    public Page<OrderListResponseDto> getMyStoreOrders(String role, UUID storeId, int page, int size) {
+        validateOwnerRole(role);
+        validatePageSize(size);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return orderRepository.findAllByStoreId(storeId, pageable)
+                .map(OrderListResponseDto::from);
+    }
+
+    private void validateOwnerRole(String role) {
+        if (!"OWNER".equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_ROLE);
+        }
+    }
+
+    public OrderResponseDto getOwnerOrder(String role, UUID orderId) {
+
+        validateOwnerRole(role);
+        Order order = findOrderById(orderId);
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+
+        return OrderResponseDto.from(order, orderItems);
+    }
+
+    private Order findOrderById(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
+    }
+
+    @Transactional
+    public OrderResponseDto acceptOrder(String role, UUID orderId) {
+        validateOwnerRole(role);
+        Order order = findOrderById(orderId);
+        order.accept();
+
+        return OrderResponseDto.from(order, orderItemRepository.findAllByOrderId(orderId));
+    }
+
+    @Transactional
+    public OrderResponseDto rejectOrder(String role, UUID orderId, OrderRejectRequestDto request) {
+        validateOwnerRole(role);
+
+        Order order = findOrderById(orderId);
+        order.reject(request.getReason());
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+        return OrderResponseDto.from(order, orderItems);
+    }
+
+    @Transactional
+    public OrderResponseDto changeOwnerOrderStatus(String role, UUID orderId, OrderStatusUpdateRequestDto request) {
+        validateOwnerRole(role);
+
+        Order order = findOrderById(orderId);
+        order.changeOwnerStatus(request.getStatus());
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+        return OrderResponseDto.from(order, orderItems);
     }
 }
