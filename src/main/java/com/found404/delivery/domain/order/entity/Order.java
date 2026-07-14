@@ -131,4 +131,16 @@ public class Order extends BaseEntity {
         }
         this.status = nextStatus;
     }
+
+    public void changeAdminStatus(OrderStatus nextStatus) {
+        if (nextStatus == null) {
+            throw new CustomException(ErrorCode.INVALID_STATUS_VALUE);
+        }
+
+        this.status = nextStatus;
+
+        if (nextStatus == OrderStatus.CANCELED) {
+            this.canceledAt = LocalDateTime.now();
+        }
+    }
 }
