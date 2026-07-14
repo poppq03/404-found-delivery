@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Getter
 @Builder
-public class StoreDetailResponse {  //가게 상세 조회
+public class StoreDetailResponseDto {  //가게 상세 조회
 
     private UUID storeId;
 
@@ -31,9 +31,9 @@ public class StoreDetailResponse {  //가게 상세 조회
 
     private String imageUrl;
 
-    public static StoreDetailResponse from(Store store) {
+    public static StoreDetailResponseDto from(Store store) {
 
-        return StoreDetailResponse.builder()
+        return StoreDetailResponseDto.builder()
                 .storeId(store.getStoreId())
                 .name(store.getName())
                 .description(store.getDescription())

@@ -1,7 +1,7 @@
 package com.found404.delivery.domain.store.controller;
 
-import com.found404.delivery.domain.store.dto.response.StoreSimpleResponse;
-import com.found404.delivery.domain.store.dto.response.StoreStatusResponse;
+import com.found404.delivery.domain.store.dto.response.StoreSimpleResponseDto;
+import com.found404.delivery.domain.store.dto.response.StoreStatusResponseDto;
 import com.found404.delivery.domain.store.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,29 +19,29 @@ public class StoreMasterController {
 
     // 가게 승인
     @PatchMapping("/stores/{storeId}/approve")
-    public StoreStatusResponse storeApproval (@PathVariable UUID storeId) {
+    public StoreStatusResponseDto storeApproval (@PathVariable UUID storeId) {
         return null;
     }
 
     // 가게 승인 대기 목록?
     @GetMapping ("/stores/approval")
-    public List<StoreSimpleResponse> storeApprovalList () {
+    public List<StoreSimpleResponseDto> storeApprovalList () {
         return null;
     }
     // 가게 정지
     @PatchMapping("/stores/{storeId}/suspend")
-    public StoreStatusResponse updateStoreSuspend(@PathVariable UUID storeId){
+    public StoreStatusResponseDto updateStoreSuspend(@PathVariable UUID storeId){
         return null;
     }
 
     // 정지 해제
     @PatchMapping("/stores/{storeId}/activate")
-    public StoreStatusResponse updateStoreActivate(@PathVariable UUID storeId){
+    public StoreStatusResponseDto updateStoreActivate(@PathVariable UUID storeId){
         return null;
     }
     // 가게 삭제
     @DeleteMapping("/stores/{storeId}")
-    public StoreStatusResponse deleteStore(@PathVariable UUID storeId){
+    public StoreStatusResponseDto deleteStore(@PathVariable UUID storeId){
         return null;
     }
 

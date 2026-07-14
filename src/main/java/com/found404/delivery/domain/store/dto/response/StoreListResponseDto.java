@@ -7,8 +7,8 @@ import java.util.List;
 
 @Getter
 @Builder
-public class StoreListResponse {
+public class StoreListResponseDto {
 
-    private List<StoreSimpleResponse> stores;
+    private List<StoreSimpleResponseDto> stores;
 
 }

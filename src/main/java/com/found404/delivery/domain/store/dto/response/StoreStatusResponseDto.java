@@ -10,7 +10,7 @@ import java.util.UUID;
 @Getter
 @Builder
 @AllArgsConstructor
-public class StoreStatusResponse {
+public class StoreStatusResponseDto {
 
     private UUID storeId;
     private StoreStatus status;
