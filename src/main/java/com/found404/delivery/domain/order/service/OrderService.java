@@ -13,7 +13,6 @@ import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.antlr.v4.runtime.atn.SemanticContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -216,5 +215,21 @@ public class OrderService {
 
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
         return OrderResponseDto.from(order, orderItems);
+    }
+
+    public Page<OrderListResponseDto> getAllOrders(String role, int page, int size) {
+        validateAdminRole(role);
+        validatePageSize(size);
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return orderRepository.findAll(pageable)
+                .map(OrderListResponseDto::from);
+    }
+
+    private void validateAdminRole(String role) {
+        if (!"MANAGER".equals(role) && !"MASTER".equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
     }
 }
