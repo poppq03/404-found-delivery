@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS p_user (
     phone VARCHAR(50) NOT NULL,
     profile_image VARCHAR(255),
     role VARCHAR(20) NOT NULL,
+    token_version BIGINT NOT NULL DEFAULT 0,
 
     created_at TIMESTAMP(6),
     created_by BIGINT,

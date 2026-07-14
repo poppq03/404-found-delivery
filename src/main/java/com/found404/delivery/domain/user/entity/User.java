@@ -43,6 +43,11 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    // JWT 발급 시점의 권한 스냅샷과 현재 권한이 같은지 비교하기 위한 값
+    // role이 바뀌거나 계정이 삭제되면 증가시켜서, 이전에 발급된 토큰을 즉시 무효화
+    @Column(name = "token_version", nullable = false)
+    private Long tokenVersion;
+
     public static User create(String username, String encodedPassword, String email,
                               String nickname, String phone, Role role) {
         User user = new User();
@@ -52,6 +57,7 @@ public class User extends BaseEntity {
         user.nickname = nickname;
         user.phone = phone;
         user.role = role;
+        user.tokenVersion = 0L;
         return user;
     }
 
@@ -59,6 +65,14 @@ public class User extends BaseEntity {
     // 도메인 모델 더 안전하고 읽기 쉽게 만들기위함
     public void changeRole(Role role) {
         this.role = role;
+        this.tokenVersion++;
+    }
+
+    // 탈퇴(Soft Delete) 처리. BaseEntity.markDeleted()와 별개로
+    // tokenVersion도 함께 증가시켜, 삭제 이후 기존 토큰이 더 이상 통과되지 않도록 한다.
+    public void withdraw(Long deletedBy) {
+        markDeleted(deletedBy);
+        this.tokenVersion++;
     }
 
     public void updateProfile(String nickname, String phone, String profileImage) {

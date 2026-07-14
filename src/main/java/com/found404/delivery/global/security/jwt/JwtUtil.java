@@ -28,7 +28,7 @@ public class JwtUtil {
     }
 
     // 1. 토큰 생성
-    public String createToken(Long userId, String username, String role) {
+    public String createToken(Long userId, String username, String role, Long tokenVersion) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expiration);
 
@@ -36,6 +36,7 @@ public class JwtUtil {
                 .subject(username)
                 .claim("userId", userId)
                 .claim("role", role)
+                .claim("tokenVersion", tokenVersion)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(secretKey)
