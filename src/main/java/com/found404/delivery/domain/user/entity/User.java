@@ -91,5 +91,6 @@ public class User extends BaseEntity {
     // role 변경,탈퇴와 달리 tokenVersion은 증가시키지 않음
     public void changePassword(String encodedNewPassword) {
         this.password = encodedNewPassword;
+        this.tokenVersion++;
     }
 }
