@@ -34,3 +34,14 @@ public class OwnerOrderController {
        return ResponseEntity.ok(ApiResponse.success(orderService.getMyStoreOrders(userDetails.getRole(),storeId, page, size)
        ));
     }
+
+    // 내 가게 주문 단건 조회
+    @GetMapping("/orders/{orderId}")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> getOwnerOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID orderId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.getOwnerOrder(userDetails.getRole(), orderId)
+        ));
+    }

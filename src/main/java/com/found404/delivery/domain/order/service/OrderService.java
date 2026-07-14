@@ -4,10 +4,6 @@ import com.found404.delivery.domain.address.entity.Address;
 import com.found404.delivery.domain.address.repository.AddressRepository;
 import com.found404.delivery.domain.menu.service.MenuInfo;
 import com.found404.delivery.domain.menu.service.MenuQueryService;
-import com.found404.delivery.domain.order.dto.OrderItemRequestDto;
-import com.found404.delivery.domain.order.dto.OrderListResponseDto;
-import com.found404.delivery.domain.order.dto.OrderRequestDto;
-import com.found404.delivery.domain.order.dto.OrderResponseDto;
 import com.found404.delivery.domain.order.dto.*;
 import com.found404.delivery.domain.order.entity.Order;
 import com.found404.delivery.domain.order.repository.OrderRepository;
@@ -135,7 +131,6 @@ public class OrderService {
                 throw new CustomException(ErrorCode.DIFFERENT_STORE_MENU);
             }
 
-            if (menuInfo.hidden() || menuInfo.soldOut()) {
             if (menuInfo.isHidden() || menuInfo.isSoldOut()) {
                 throw new CustomException(ErrorCode.MENU_UNAVAILABLE);
             }
@@ -176,5 +171,19 @@ public class OrderService {
         if (!"OWNER".equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN_ROLE);
         }
+    }
+
+    public OrderResponseDto getOwnerOrder(String role, UUID orderId) {
+
+        validateOwnerRole(role);
+        Order order = findOrderById(orderId);
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+
+        return OrderResponseDto.from(order, orderItems);
+    }
+
+    private Order findOrderById(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
     }
 }
