@@ -53,4 +53,25 @@ public class CartController {
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @DeleteMapping("/cart/items/{cartItemId}")
+    public ResponseEntity<ApiResponse<CartResponseDto>> removeItem(
+            @PathVariable UUID cartItemId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        CartResponseDto response = cartService.removeItem(
+                userDetails.getUserId(), userDetails.getRole(), cartItemId);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @DeleteMapping("/cart")
+    public ResponseEntity<ApiResponse<CartResponseDto>> clearCart(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        CartResponseDto response = cartService.clearCart(
+                userDetails.getUserId(), userDetails.getRole());
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }

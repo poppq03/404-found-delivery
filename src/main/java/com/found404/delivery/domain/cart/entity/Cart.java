@@ -64,29 +64,37 @@ public class Cart {
         this.storeId = storeId;
     }
 
-    public void addItem(UUID menuId, int quantity, UUID storeId) {
-        if (this.storeId == null) {
-            this.storeId = storeId;
+    public void addItem(UUID menuId, int quantity, UUID menuStoreId) {
+        if (this.storeId == null) {          // 빈 장바구니면 가게 지정
+            this.storeId = menuStoreId;
         }
         CartItem existing = findItem(menuId);
         if (existing != null) {
-            existing.addQuantity(quantity);
+            existing.addQuantity(quantity);  // 같은 메뉴 → 수량 합산
         } else {
             CartItem item = CartItem.builder().menuId(menuId).quantity(quantity).build();
-            this.items.add(item);
-            item.assignCart(this);
+            this.items.add(item);            // 새 메뉴 → 항목 추가
+            item.assignCart(this);           // 연관관계 양쪽 세팅
         }
     }
 
-    private CartItem findItem(UUID menuId) {
-        return this.items.stream()
-                .filter(item -> item.getMenuId().equals(menuId))
-                .findFirst()
-                .orElse(null);
+    public void removeItem(CartItem item) {
+        items.remove(item);
+        if (items.isEmpty()) {
+            this.storeId = null;
+        }
     }
 
     public void clearCart() {
         items.clear();
         this.storeId = null;
+    }
+
+    // items에서 같은 메뉴 항목 찾기 (없으면 null)
+    private CartItem findItem(UUID menuId) {
+        return this.items.stream()
+                .filter(item -> item.getMenuId().equals(menuId))
+                .findFirst()
+                .orElse(null);
     }
 }
