@@ -227,6 +227,15 @@ public class OrderService {
                 .map(OrderListResponseDto::from);
     }
 
+
+    public OrderResponseDto getAdminOrder(String role, UUID orderId) {
+        validateAdminRole(role);
+
+        Order order = findOrderById(orderId);
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+
+        return OrderResponseDto.from(order, orderItems);
+    }
     private void validateAdminRole(String role) {
         if (!"MANAGER".equals(role) && !"MASTER".equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN);

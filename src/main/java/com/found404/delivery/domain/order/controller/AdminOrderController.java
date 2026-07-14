@@ -32,4 +32,14 @@ public class AdminOrderController {
                orderService.getAllOrders(userDetails.getRole(), page, size)
        ));
     }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> getAdminOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID orderId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.getAdminOrder(userDetails.getRole(), orderId)
+        ));
+    }
 }
