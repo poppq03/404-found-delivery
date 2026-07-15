@@ -20,7 +20,8 @@ import com.found404.delivery.domain.user.entity.User;
 import com.found404.delivery.domain.user.repository.UserRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
-import com.found404.delivery.global.storage.S3ImageStorage;
+import com.found404.delivery.global.storage.ImageStorage;
+import com.found404.delivery.global.transaction.AfterCommitExecutor;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +30,12 @@ import org.springframework.data.domain.Slice;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
 @Slf4j
 public class StoreService {
 
@@ -44,128 +43,96 @@ public class StoreService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final RegionRepository regionRepository;
-    private final S3ImageStorage imageStorage;
+    private final ImageStorage imageStorage;
+    private final AfterCommitExecutor afterCommitExecutor;
 
     // ================================ All ==================================== //
     // 가게목록 조회
     public Slice<StoreSimpleResponseDto> getStores(Pageable pageable) {
         Slice<Store> stores = storeRepository.findStoreList(pageable);
-        return stores.map(StoreSimpleResponseDto::from);
+        return stores.map(s -> StoreSimpleResponseDto.from(s, resolveImageUrl(s)));
     }
 
     // 카테고리 별 가게 목록 조회
     @Transactional(readOnly = true)
     public Slice<StoreSimpleResponseDto> getStoresByCategory(UUID categoryId, Pageable pageable) {
-        Slice<Store> stores = storeRepository
-                .findStoreListByCategory(
-                        categoryId,
-                        StoreStatus.SUSPENDED,
-                        pageable
-                );
-        return stores.map(StoreSimpleResponseDto::from);
+        Slice<Store> stores = storeRepository.findStoreListByCategory(categoryId, StoreStatus.SUSPENDED, pageable);
+        return stores.map(s -> StoreSimpleResponseDto.from(s, resolveImageUrl(s)));
     }
-
 
     // 키워드 목록 조회
     @Transactional(readOnly = true)
     public Slice<StoreSimpleResponseDto> searchStoresByKeyword(String keyword, Pageable pageable) {
-        return storeRepository.searchStores(
-                keyword,
-                StoreStatus.SUSPENDED,
-                pageable
-        ).map(StoreSimpleResponseDto::from);
+        return storeRepository.searchStores(keyword, StoreStatus.SUSPENDED, pageable)
+                .map(s -> StoreSimpleResponseDto.from(s, resolveImageUrl(s)));
     }
-
 
     // 가게 세부사항 조회
     @Transactional(readOnly = true)
     public StoreDetailResponseDto getStoreDetail(UUID storeId) {
-
-        Store store = storeRepository.findByStoreIdAndIsActiveTrueAndStatusNot(
-                storeId,
-                StoreStatus.SUSPENDED
-        ).orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
-
-        return StoreDetailResponseDto.from(store);
+        Store store = storeRepository.findByStoreIdAndIsActiveTrueAndStatusNot(storeId, StoreStatus.SUSPENDED)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+        return StoreDetailResponseDto.from(store, resolveImageUrl(store));
     }
 
-
     // ================================ OWNER ================================== //
-
 
     // 가게 등록
     @Transactional
     public StoreDetailResponseDto createStore(Long userId, StoreCreateRequestDto request, MultipartFile image) {
         // 유저가 존재하는지 확인
         User owner = userRepository.findById(userId)
-                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        if (owner.getRole() != Role.OWNER){
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        if (owner.getRole() != Role.OWNER) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         // 카테고리 조회
         Category category = getCategory(request.getCategoryId());
         // 지역 조회
         Region region = getRegion(request.getRegionId());
-        String imageUrl="";
-        String extension = "";
-        String key = "";
-        try {
-            // 이미지 업로드
-            if (image != null && !image.isEmpty()) {
-                //확장자, 크기 검증
-                extension = imageStorage.validateImage(image);
 
-                 key = "stores/" + UUID.randomUUID() + "." + extension;
-                // 이미지 저장
-                imageStorage.upload(key, image);
+        // save 전에 검증 (확장자만 받아둠)
+        String ext = null;
+        if (image != null && !image.isEmpty()) {
+            ext = imageStorage.validateImage(image);
+        }
 
-                imageUrl = imageStorage.toUrl(key);
-            }
-            // Store Entity 생성
-            Store store = Store.builder()
-                    .owner(owner)
-                    .category(category)
-                    .region(region)
-                    .name(request.getName())
-                    .phoneNumber(request.getPhoneNumber())
-                    .description(request.getDescription())
-                    .address(request.getAddress())
-                    .detailAddress(request.getDetailAddress())
-                    .minOrderPrice(request.getMinOrderPrice())
-                    .deliveryFee(request.getDeliveryFee())
-                    .imageUrl(imageUrl)
-                    .status(StoreStatus.PENDING)
-                    .isActive(true)
-                    .build();
+        // Store Entity 생성
+        Store store = Store.builder()
+                .owner(owner)
+                .category(category)
+                .region(region)
+                .name(request.getName())
+                .phoneNumber(request.getPhoneNumber())
+                .description(request.getDescription())
+                .address(request.getAddress())
+                .detailAddress(request.getDetailAddress())
+                .minOrderPrice(request.getMinOrderPrice())
+                .deliveryFee(request.getDeliveryFee())
+                .imageUrl(null) // save 후 dirty checking으로 key 채움
+                .status(StoreStatus.PENDING)
+                .isActive(true)
+                .build();
 
-            // 저장
-            Store saveStore = storeRepository.save(store);
+        // 저장
+        Store saveStore = storeRepository.save(store);
 
-            // 응답 반환
-            return StoreDetailResponseDto.from(saveStore);
+        // image key 조립
+        if (ext != null) {
+            String key = storeImageKey(saveStore.getStoreId(), ext);
+            imageStorage.upload(key, image);
+            saveStore.changeImage(key);
+        }
 
-        }catch (Exception e) {
-            if(key != null){
-                imageStorage.delete(key);
-            }
-        }throw new CustomException(ErrorCode.IMAGE_UPLOAD_FAILED);
-
+        // 응답 반환
+        return StoreDetailResponseDto.from(saveStore, resolveImageUrl(saveStore));
     }
-
-
 
     // 가게 수정
     @Transactional
-    public StoreDetailResponseDto updateStore(
-            Long userId,
-            UUID storeId,
-            MultipartFile image,
-            @Valid StoreUpdateRequestDto request) {
-
+    public StoreDetailResponseDto updateStore(Long userId, UUID storeId, MultipartFile image, @Valid StoreUpdateRequestDto request) {
         // 가게 조회
         Store store = getStore(storeId);
-
         // 소유자 확인
         checkIdentification(userId, store);
         // 카테고리 변경
@@ -173,31 +140,27 @@ public class StoreService {
         // 지역 변경
         Region region = getRegion(request.getRegionId());
 
-        // 이미지 변경
-        String imageUrl = store.getImageUrl();
-        if(image != null && !image.isEmpty()) {
-            String extension = imageStorage.validateImage(image);
-
-            String key = "stores/" + UUID.randomUUID() + "." + extension;
-            imageStorage.upload(key, image);
-            imageUrl = imageStorage.toUrl(key);
-        }
-
         store.update(
-                request.getName(),
-                request.getPhoneNumber(),
-                request.getDescription(),
-                request.getAddress(),
-                request.getDetailAddress(),
-                request.getMinOrderPrice(),
-                request.getDeliveryFee(),
-                category,
-                region
+                request.getName(), request.getPhoneNumber(), request.getDescription(),
+                request.getAddress(), request.getDetailAddress(),
+                request.getMinOrderPrice(), request.getDeliveryFee(), category, region
         );
 
-        store.changeImage(imageUrl);
+        if (image != null && !image.isEmpty()) {
+            String ext = imageStorage.validateImage(image);
+            String newKey = storeImageKey(store.getStoreId(), ext);
+            String oldKey = store.getImageUrl();
 
-        return StoreDetailResponseDto.from(store);
+            imageStorage.upload(newKey, image);
+            store.changeImage(newKey);
+
+            // 트랜잭션 커밋 후 기존 이미지 삭제 (확장자가 바뀐 경우)
+            if (oldKey != null && !oldKey.equals(newKey)) {
+                afterCommitExecutor.execute(() -> imageStorage.delete(oldKey));
+            }
+        }
+
+        return StoreDetailResponseDto.from(store, resolveImageUrl(store));
     }
 
     // 가게 삭제
@@ -210,17 +173,14 @@ public class StoreService {
         // 이미 삭제되었는지 확인
         checkDeletedStore(store);
 
-        store.delete(userId);
-        imageStorage.delete(store.getImageUrl());
+        store.delete(userId); // soft delete, S3 파일도 삭제되지 않음
 
-        return new StoreStatusResponseDto(storeId,StoreStatus.SUSPENDED,"성공적으로 삭제되었습니다.");
+        return new StoreStatusResponseDto(storeId, StoreStatus.SUSPENDED, "성공적으로 삭제되었습니다.");
     }
-
 
     // 스토어 영업상태 변경
     @Transactional
     public StoreStatusResponseDto updateStoreStatus(Long userId, UUID storeId, StoreStatusRequestDto request) {
-
         // 가게 조회
         Store store = getStore(storeId);
         // 소유자 확인
@@ -228,56 +188,38 @@ public class StoreService {
         // 삭제된 가게인지 확인
         checkDeletedStore(store);
         // 동일한 상태인지 확인
-        if (store.getStatus() == request.getStatus()){
+        if (store.getStatus() == request.getStatus()) {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
         store.changeStatus(request.getStatus());
-        return new StoreStatusResponseDto(
-                store.getStoreId(),
-                store.getStatus(),
-                "영업상태가 변경되었습니다."
-        );
+        return new StoreStatusResponseDto(store.getStoreId(), store.getStatus(), "영업상태가 변경되었습니다.");
     }
 
     // 최소 주문금액 수정
     @Transactional
-    public StoreStatusResponseDto updateMinOrderPrice(
-            Long userId,
-            UUID storeId,
-            MinOrderPriceUpdateRequestDto request
-    ){
-        // 가게 조회 
+    public StoreStatusResponseDto updateMinOrderPrice(Long userId, UUID storeId, MinOrderPriceUpdateRequestDto request) {
+        // 가게 조회
         Store store = getStore(storeId);
         // 소유자 확인
         checkIdentification(userId, store);
         // 삭제된 가게인지
         checkDeletedStore(store);
         // 기존 금액과 동일한지
-        if(store.getMinOrderPrice().equals(request.getMinOrderPrice())){
+        if (store.getMinOrderPrice().equals(request.getMinOrderPrice())) {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
         // 최소 주문 금액 변경
         store.changeMinOrderPrice(request.getMinOrderPrice());
-
-
-        return new StoreStatusResponseDto(
-                store.getStoreId(),
-                store.getStatus(),
-                "최소 주문 금액이 변경되었습니다."
-        );
+        return new StoreStatusResponseDto(store.getStoreId(), store.getStatus(), "최소 주문 금액이 변경되었습니다.");
     }
 
     // ================================ MASTER | MANAGER ================================== //
 
-
-
     // 가게 승인 대기 목록
     @Transactional(readOnly = true)
     public Slice<StorePendingResponseDto> getPendingStores(Pageable pageable) {
-        return storeRepository.findByStatusAndIsActiveTrue(
-                StoreStatus.PENDING,
-                pageable
-        ).map(StorePendingResponseDto::from);
+        return storeRepository.findByStatusAndIsActiveTrue(StoreStatus.PENDING, pageable)
+                .map(StorePendingResponseDto::from);
     }
 
     // 가게 승인 API
@@ -285,29 +227,21 @@ public class StoreService {
     public StoreStatusResponseDto storeApproval(Long userId, UUID storeId) {
         Store store = getStore(storeId);
 
-        if(!store.getIsActive()){
+        if (!store.getIsActive()) {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
         // 이미 승인된 경우
-        if(store.getStatus() == StoreStatus.OPEN || store.getStatus() == StoreStatus.CLOSED
-        || store.getStatus() == StoreStatus.BREAK_TIME){
-            throw  new CustomException(ErrorCode.INVALID_INPUT);
+        if (store.getStatus() == StoreStatus.OPEN || store.getStatus() == StoreStatus.CLOSED
+                || store.getStatus() == StoreStatus.BREAK_TIME) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
         }
-
         // 정지된 가게는 승인 불가
-        if(store.getStatus() == StoreStatus.SUSPENDED){
+        if (store.getStatus() == StoreStatus.SUSPENDED) {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
 
         store.approve();
-
-        return new StoreStatusResponseDto(
-                store.getStoreId(),
-                store.getStatus(),
-                "가게 승인이 완료되었습니다."
-        );
-
-
+        return new StoreStatusResponseDto(store.getStoreId(), store.getStatus(), "가게 승인이 완료되었습니다.");
     }
 
     // 가게 상태 변경 API
@@ -316,90 +250,68 @@ public class StoreService {
         Store store = getStore(storeId);
         checkDeletedStore(store);
         StoreStatus newStatus = request.getStatus();
-
-        if(store.getStatus() == newStatus){
+        if (store.getStatus() == newStatus) {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
         if (newStatus == StoreStatus.PENDING) {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
         store.changeStatus(newStatus);
-
-
-        return new StoreStatusResponseDto(
-                store.getStoreId(),
-                store.getStatus(),
-                "관리자에 의해 가게 상태가 변경되었습니다."
-        );
+        return new StoreStatusResponseDto(store.getStoreId(), store.getStatus(), "관리자에 의해 가게 상태가 변경되었습니다.");
     }
-
-
 
     // 가게 삭제 API
     @Transactional
     public StoreStatusResponseDto deleteStoreByMaster(Long userId, UUID storeId) {
         Store store = getStore(storeId);
         checkDeletedStore(store);
-        String imageUrl = store.getImageUrl();
-        store.delete(userId);
-        if(imageUrl == null && imageUrl.isBlank()){
-            imageStorage.delete(store.getImageUrl());
-        }
 
-        return new StoreStatusResponseDto(
-                store.getStoreId(),
-                store.getStatus(),
-                "관리자에 의해 가게가 삭제되었습니다."
-        );
+        store.delete(userId); // soft delete, S3 파일도 삭제되지 않음
 
+        return new StoreStatusResponseDto(store.getStoreId(), store.getStatus(), "관리자에 의해 가게가 삭제되었습니다.");
     }
 
-
-
-
-
-
-
-
-
+    // ================================ 헬퍼 ================================== //
 
     // 삭제된 가게인지 확인
     private static void checkDeletedStore(Store store) {
-        if(Boolean.FALSE.equals(store.getIsActive())){
+        if (Boolean.FALSE.equals(store.getIsActive())) {
             throw new CustomException(ErrorCode.STORE_NOT_FOUND);
         }
     }
 
     // 소유자 확인
     private static void checkIdentification(Long userId, Store store) {
-        if(!store.getOwner().getId().equals(userId)){
-            System.out.println("소유자확인 에러");
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        if (!store.getOwner().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.NOT_STORE_OWNER);
         }
     }
 
+    // 가게 이미지 S3 key
+    private String storeImageKey(UUID storeId, String ext) {
+        return "stores/" + storeId + "." + ext;
+    }
+
+    // DB에 저장된 S3 key → URL 변환, 이미지 없을 시 null
+    private String resolveImageUrl(Store store) {
+        return imageStorage.toUrlOrNull(store.getImageUrl());
+    }
 
     @NonNull
     private Region getRegion(UUID request) {
-        Region region = regionRepository.findById(request).orElseThrow(() ->
-                new CustomException(ErrorCode.INVALID_INPUT));
-        return region;
+        return regionRepository.findById(request)
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT));
     }
 
     @NonNull
     private Category getCategory(UUID request) {
-        Category category = categoryRepository.findById(request).orElseThrow(() ->
-                new CustomException(ErrorCode.INVALID_INPUT));
-        return category;
+        return categoryRepository.findById(request)
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT));
     }
 
     @NonNull
     private Store getStore(UUID storeId) {
-        Store store = storeRepository.findById(storeId)
+        return storeRepository.findById(storeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
-        return store;
     }
-
-
-
 }

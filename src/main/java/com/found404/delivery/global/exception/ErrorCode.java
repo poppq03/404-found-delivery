@@ -31,10 +31,9 @@ public enum ErrorCode {
     // ===== Store =====
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "가게가 존재하지 않습니다."),
     NOT_STORE_OWNER(HttpStatus.FORBIDDEN, "본인 소유 가게가 아닙니다."),
-    FORBIDDEN_ROLE(HttpStatus.FORBIDDEN, "OWNER 권한이 아닙니다."), // TODO: FORBIDDEN과 중복, 팀 협의 후 통합 검토
 
     // ===== Menu =====
-    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴가 존재하지 않습니다."), // TODO: 원본 문서 405 → 404로 임시 수정, 담당자 확인 필요
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴가 존재하지 않습니다."),
     MENU_UNAVAILABLE(HttpStatus.CONFLICT, "품절 또는 숨김 처리된 메뉴입니다."),
     AI_GENERATION_FAILED(HttpStatus.BAD_GATEWAY, "AI 설명 생성에 실패했습니다."),
 
@@ -54,6 +53,8 @@ public enum ErrorCode {
     NOT_ORDER_OWNER(HttpStatus.FORBIDDEN, "본인 주문이 아닙니다."),
     INVALID_ORDER_ITEM(HttpStatus.BAD_REQUEST, "주문 상품 정보가 올바르지 않습니다."),
     ORDER_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "완료된 주문에 대해서만 가능합니다."),
+    STORE_NOT_AVAILABLE(HttpStatus.CONFLICT, "현재 주문할 수 없는 가게입니다."),
+    MIN_ORDER_PRICE_NOT_MET(HttpStatus.BAD_REQUEST, "최소 주문 금액을 충족하지 못했습니다."),
 
     // ===== Payment =====
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "결제 내역이 존재하지 않습니다."),
