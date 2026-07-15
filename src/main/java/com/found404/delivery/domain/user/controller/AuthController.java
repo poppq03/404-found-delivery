@@ -4,6 +4,9 @@ import com.found404.delivery.domain.user.dto.LoginRequestDto;
 import com.found404.delivery.domain.user.dto.LoginResponseDto;
 import com.found404.delivery.domain.user.service.UserService;
 import com.found404.delivery.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Auth", description = "로그인/인증 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
@@ -20,6 +24,8 @@ public class AuthController {
 
     private final UserService userService;
 
+    @Operation(summary = "로그인", description = "username/password로 로그인하고 JWT를 발급받는다. 인증 불필요.")
+    @SecurityRequirements(value = {})
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(
             @Valid @RequestBody LoginRequestDto request

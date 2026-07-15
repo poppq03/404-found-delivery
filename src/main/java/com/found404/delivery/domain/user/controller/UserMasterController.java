@@ -7,6 +7,8 @@ import com.found404.delivery.domain.user.dto.UserUpdateRequestDto;
 import com.found404.delivery.domain.user.service.UserService;
 import com.found404.delivery.global.response.ApiResponse;
 import com.found404.delivery.global.security.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 // MASTER 전용 기능. StoreMasterController와 동일한 네이밍 규칙 적용
 // (Admin{도메인}Controller는 MANAGER/MASTER 공용, {도메인}MasterController는 MASTER 전용).
+@Tag(name = "Master - Manager", description = "MASTER 전용 MANAGER 계정 관리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
@@ -23,6 +26,7 @@ public class UserMasterController {
 
     private final UserService userService;
 
+    @Operation(summary = "MANAGER 계정 생성", description = "role이 MANAGER로 고정되어 생성된다. MASTER만 가능.")
     @PostMapping("/managers")
     public ResponseEntity<ApiResponse<SignupResponseDto>> createManager(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -36,6 +40,7 @@ public class UserMasterController {
     }
 
     // MANAGER 전용 단건 조회.
+    @Operation(summary = "MANAGER 단건 조회", description = "대상이 실제 MANAGER가 아니면 404. MASTER만 가능.")
     @GetMapping("/managers/{userId}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getManager(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -47,6 +52,7 @@ public class UserMasterController {
     }
 
     // MANAGER 계정 정보 수정 (닉네임/전화번호/프로필이미지)
+    @Operation(summary = "MANAGER 정보 수정", description = "대상이 실제 MANAGER가 아니면 404. MASTER만 가능.")
     @PatchMapping("/managers/{userId}")
     public ResponseEntity<ApiResponse<UserResponseDto>> updateManager(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -59,6 +65,7 @@ public class UserMasterController {
     }
 
     // MANAGER 계정 삭제 (Soft Delete)
+    @Operation(summary = "MANAGER 삭제", description = "Soft Delete 처리. deletedBy는 삭제 대상이 아닌 요청자(MASTER)로 기록됨. MASTER만 가능.")
     @DeleteMapping("/managers/{userId}")
     public ResponseEntity<ApiResponse<Void>> deleteManager(
             @AuthenticationPrincipal CustomUserDetails userDetails,
