@@ -9,6 +9,7 @@ import com.found404.delivery.domain.order.entity.Order;
 import com.found404.delivery.domain.order.repository.OrderRepository;
 import com.found404.delivery.domain.orderitem.entity.OrderItem;
 import com.found404.delivery.domain.orderitem.repository.OrderItemRepository;
+import com.found404.delivery.domain.payment.service.PaymentService;
 import com.found404.delivery.domain.store.repository.StoreRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
@@ -33,6 +34,7 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final AddressRepository addressRepository;
     private final StoreRepository storeRepository;
+    private final PaymentService paymentService;
 
     @Transactional
     public OrderResponseDto createOrder(Long userId, @Valid OrderRequestDto request) {
@@ -97,6 +99,7 @@ public class OrderService {
     public OrderResponseDto cancelOrder(Long userId, UUID orderId) {
         Order order = findOrderByIdAndUserId(orderId, userId);
         order.cancel();
+        paymentService.cancelPaymentByOrderIdIfExists(userId, orderId);
 
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
 
