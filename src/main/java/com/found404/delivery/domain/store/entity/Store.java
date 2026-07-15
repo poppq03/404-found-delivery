@@ -5,8 +5,6 @@ import com.found404.delivery.domain.category.entity.Category;
 import com.found404.delivery.domain.region.entity.Region;
 import com.found404.delivery.domain.user.entity.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
@@ -23,8 +21,9 @@ import java.util.UUID;
 public class Store {
 
     @Id
-    @GeneratedValue( strategy = GenerationType.IDENTITY )
+    @GeneratedValue
     @UuidGenerator
+    @Column(name = "store_id", nullable = false, updatable = false)
     private UUID storeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -67,23 +66,23 @@ public class Store {
     @Column(name = "is_active")
     private Boolean isActive;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "created_by")
-    private Integer createdBy;
+    private Long createdBy;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Integer updatedBy;
+    private Long updatedBy;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Column(name = "deleted_by")
-    private Integer deletedBy;
+    private Long deletedBy;
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;
@@ -98,7 +97,7 @@ public class Store {
             Integer deliveryFee,
             Category categoryId,
             Region regionId,
-            Integer updatedBy){
+            Long updatedBy){
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.description = description;
@@ -117,17 +116,34 @@ public class Store {
         this.imageUrl = imageUrl;
     }
 
-    public void delete(Integer deletedBy){
+    public void delete(Long deletedBy){
         this.isActive = false;
         this.deletedAt = LocalDateTime.now();
         this.deletedBy = deletedBy;
     }
 
-    public void chaneStatus(StoreStatus status) {
+    public void changeStatus(StoreStatus status) {
         this.status = status;
     }
 
-    public void chaneMinOrderPrice(Integer minOrderPrice) {
+    public void changeMinOrderPrice(Integer minOrderPrice) {
         this.minOrderPrice = minOrderPrice;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+
+        if (this.createdAt == null) {
+            this.createdAt = now;
+        }
+
+        if (this.updatedAt == null) {
+            this.updatedAt = now;
+        }
+
+        if (this.isActive == null) {
+            this.isActive = true;
+        }
     }
 }

@@ -75,4 +75,7 @@ public interface StoreRepository extends JpaRepository<Store, UUID> {
 
     Page<Store> findAll(Pageable pageable);
 
+    Slice<Store> findByStatusAndIsActiveTrue(StoreStatus storeStatus, Pageable pageable);
+
+
 }
