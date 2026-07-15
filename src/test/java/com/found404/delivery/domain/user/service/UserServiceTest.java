@@ -2,6 +2,7 @@ package com.found404.delivery.domain.user.service;
 
 import com.found404.delivery.domain.user.dto.LoginRequestDto;
 import com.found404.delivery.domain.user.dto.LoginResponseDto;
+import com.found404.delivery.domain.user.dto.ManagerCreateRequestDto;
 import com.found404.delivery.domain.user.dto.PasswordUpdateRequestDto;
 import com.found404.delivery.domain.user.dto.SignupRequestDto;
 import com.found404.delivery.domain.user.dto.SignupResponseDto;
@@ -86,6 +87,17 @@ class UserServiceTest {
         PasswordUpdateRequestDto dto = new PasswordUpdateRequestDto();
         ReflectionTestUtils.setField(dto, "currentPassword", currentPassword);
         ReflectionTestUtils.setField(dto, "newPassword", newPassword);
+        return dto;
+    }
+
+    private ManagerCreateRequestDto managerCreateRequest(String username, String password, String email,
+                                                         String nickname, String phone) {
+        ManagerCreateRequestDto dto = new ManagerCreateRequestDto();
+        ReflectionTestUtils.setField(dto, "username", username);
+        ReflectionTestUtils.setField(dto, "password", password);
+        ReflectionTestUtils.setField(dto, "email", email);
+        ReflectionTestUtils.setField(dto, "nickname", nickname);
+        ReflectionTestUtils.setField(dto, "phone", phone);
         return dto;
     }
 
@@ -392,6 +404,186 @@ class UserServiceTest {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getUserByAdmin("MANAGER", 999L))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+    // ===== createManager =====
+
+    @Test
+    @DisplayName("MANAGER 생성 성공 - MASTER 권한, role이 MANAGER로 고정됨")
+    void createManager_success() {
+        ManagerCreateRequestDto request = managerCreateRequest(
+                "manager1", "Manager1!", "manager1@example.com", "매니저", "01055556666");
+
+        when(userRepository.existsByUsername("manager1")).thenReturn(false);
+        when(userRepository.existsByEmail("manager1@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("Manager1!")).thenReturn("ENCODED");
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(invocation -> userWithId(3L, "manager1", "ENCODED",
+                        "manager1@example.com", "매니저", "01055556666", Role.MANAGER));
+
+        SignupResponseDto response = userService.createManager("MASTER", request);
+
+        assertThat(response.getUsername()).isEqualTo("manager1");
+        assertThat(response.getRole()).isEqualTo(Role.MANAGER); // 요청에 role이 없어도 MANAGER로 고정되는지 확인
+    }
+
+    @Test
+    @DisplayName("MANAGER 생성 실패 - MANAGER 권한이면 FORBIDDEN 예외 (MASTER만 가능)")
+    void createManager_fail_notMaster() {
+        ManagerCreateRequestDto request = managerCreateRequest(
+                "manager2", "Manager1!", "manager2@example.com", "매니저2", "01055556667");
+
+        assertThatThrownBy(() -> userService.createManager("MANAGER", request))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.FORBIDDEN);
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("MANAGER 생성 실패 - username 중복이면 USERNAME_ALREADY_EXISTS 예외")
+    void createManager_fail_duplicateUsername() {
+        ManagerCreateRequestDto request = managerCreateRequest(
+                "manager1", "Manager1!", "new@example.com", "매니저", "01055556666");
+
+        when(userRepository.existsByUsername("manager1")).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.createManager("MASTER", request))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.USERNAME_ALREADY_EXISTS);
+
+        verify(userRepository, never()).save(any());
+    }
+
+    // ===== getManagerByAdmin =====
+
+    @Test
+    @DisplayName("MANAGER 단건 조회 성공 - MASTER 권한, 대상이 실제 MANAGER")
+    void getManagerByAdmin_success() {
+        User manager = userWithId(3L, "manager1", "ENCODED", "manager1@example.com",
+                "매니저", "01055556666", Role.MANAGER);
+
+        when(userRepository.findById(3L)).thenReturn(Optional.of(manager));
+
+        UserResponseDto response = userService.getManagerByAdmin("MASTER", 3L);
+
+        assertThat(response.getUserId()).isEqualTo(3L);
+        assertThat(response.getRole()).isEqualTo(Role.MANAGER);
+    }
+
+    @Test
+    @DisplayName("MANAGER 단건 조회 실패 - MANAGER 권한이면 FORBIDDEN 예외 (MASTER만 가능)")
+    void getManagerByAdmin_fail_notMaster() {
+        assertThatThrownBy(() -> userService.getManagerByAdmin("MANAGER", 3L))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.FORBIDDEN);
+
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("MANAGER 단건 조회 실패 - 대상이 MANAGER가 아니면(CUSTOMER) USER_NOT_FOUND 예외")
+    void getManagerByAdmin_fail_targetNotManager() {
+        User customer = userWithId(2L, "customer1", "ENCODED", "customer1@example.com",
+                "고객", "01099998888", Role.CUSTOMER);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(customer));
+
+        assertThatThrownBy(() -> userService.getManagerByAdmin("MASTER", 2L))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+
+    // ===== updateManager =====
+
+    @Test
+    @DisplayName("MANAGER 수정 성공 - MASTER 권한, 대상이 실제 MANAGER")
+    void updateManager_success() {
+        User manager = userWithId(3L, "manager1", "ENCODED", "manager1@example.com",
+                "매니저", "01055556666", Role.MANAGER);
+        UserUpdateRequestDto request = updateRequest("수정된매니저", null, null);
+
+        when(userRepository.findById(3L)).thenReturn(Optional.of(manager));
+
+        UserResponseDto response = userService.updateManager("MASTER", 3L, request);
+
+        assertThat(response.getNickname()).isEqualTo("수정된매니저");
+    }
+
+    @Test
+    @DisplayName("MANAGER 수정 실패 - MANAGER 권한이면 FORBIDDEN 예외 (MASTER만 가능)")
+    void updateManager_fail_notMaster() {
+        UserUpdateRequestDto request = updateRequest("몰래수정", null, null);
+
+        assertThatThrownBy(() -> userService.updateManager("MANAGER", 3L, request))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.FORBIDDEN);
+
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("MANAGER 수정 실패 - 대상이 MANAGER가 아니면(CUSTOMER) USER_NOT_FOUND 예외")
+    void updateManager_fail_targetNotManager() {
+        User customer = userWithId(2L, "customer1", "ENCODED", "customer1@example.com",
+                "고객", "01099998888", Role.CUSTOMER);
+        UserUpdateRequestDto request = updateRequest("잘못된시도", null, null);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(customer));
+
+        assertThatThrownBy(() -> userService.updateManager("MASTER", 2L, request))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+
+    // ===== deleteManager =====
+
+    @Test
+    @DisplayName("MANAGER 삭제 성공 - deletedBy가 대상 본인이 아니라 요청자(MASTER) id로 세팅, username 반환")
+    void deleteManager_success() {
+        User manager = userWithId(3L, "manager1", "ENCODED", "manager1@example.com",
+                "매니저", "01055556666", Role.MANAGER);
+        Long masterRequesterId = 1L; // MASTER 본인의 id (삭제 대상인 3L과 다름)
+        Long beforeVersion = manager.getTokenVersion();
+
+        when(userRepository.findById(3L)).thenReturn(Optional.of(manager));
+
+        String deletedUsername = userService.deleteManager("MASTER", masterRequesterId, 3L);
+
+        assertThat(deletedUsername).isEqualTo("manager1");
+        assertThat(manager.getDeletedAt()).isNotNull();
+        assertThat(manager.getDeletedBy()).isEqualTo(masterRequesterId); // 대상 본인(3L)이 아니라 요청자(1L)여야 함
+        assertThat(manager.getTokenVersion()).isEqualTo(beforeVersion + 1);
+    }
+
+    @Test
+    @DisplayName("MANAGER 삭제 실패 - MANAGER 권한이면 FORBIDDEN 예외 (MASTER만 가능)")
+    void deleteManager_fail_notMaster() {
+        assertThatThrownBy(() -> userService.deleteManager("MANAGER", 1L, 3L))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(ErrorCode.FORBIDDEN);
+
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("MANAGER 삭제 실패 - 대상이 MANAGER가 아니면(CUSTOMER) USER_NOT_FOUND 예외")
+    void deleteManager_fail_targetNotManager() {
+        User customer = userWithId(2L, "customer1", "ENCODED", "customer1@example.com",
+                "고객", "01099998888", Role.CUSTOMER);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(customer));
+
+        assertThatThrownBy(() -> userService.deleteManager("MASTER", 1L, 2L))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
