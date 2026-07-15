@@ -140,6 +140,13 @@ public class UserService {
         return UserListResponseDto.from(userPage);
     }
 
+    // 관리자용 특정 유저 단건 조회 (MANAGER, MASTER만 접근 가능)
+    public UserResponseDto getUserByAdmin(String requesterRole, Long targetUserId) {
+        validateAdminAccess(requesterRole);
+        User user = getUserOrThrow(targetUserId);
+        return UserResponseDto.from(user);
+    }
+
     // 관리자 전용 API 공통 권한 체크: MANAGER, MASTER만 통과
     private void validateAdminAccess(String role) {
         if (!Role.MANAGER.name().equals(role) && !Role.MASTER.name().equals(role)) {
