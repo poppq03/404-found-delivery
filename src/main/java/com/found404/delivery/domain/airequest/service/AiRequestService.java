@@ -8,6 +8,7 @@ import com.found404.delivery.domain.airequest.dto.AiRequestListResponseDto;
 import com.found404.delivery.domain.airequest.entity.AiRequest;
 import com.found404.delivery.domain.airequest.entity.AiRequestStatus;
 import com.found404.delivery.domain.airequest.repository.AiRequestRepository;
+import com.found404.delivery.domain.user.entity.Role;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -61,8 +62,8 @@ public class AiRequestService {
 
         validateHistoryAccess(role);
 
-        // 유저 권한 TEMP TODO: UserRole enum 확정 시 문자열 비교 -> enum 비교로 교체
-        Long ownerScope = "OWNER".equals(role) ? userId : null;
+        // OWNER는 본인 요청 이력만, MANAGER/MASTER는 전체
+        Long ownerScope = (Role.valueOf(role) == Role.OWNER) ? userId : null;
 
         List<Sort.Order> orders = pageable.getSort().stream()
                 .filter(order -> ALLOWED_SORT.contains(order.getProperty()))
@@ -99,18 +100,17 @@ public class AiRequestService {
         return aiRequestRepository.save(aiRequest);
     }
 
-    // AI 설명 생성 권한 TEMP
-    // TODO: UserRole enum 확정되면 교체
+    // AI 설명 생성 권한 (OWNER)
     private void validateOwnerRole(String role) {
-        if (!"OWNER".equals(role)) {
+        if (Role.valueOf(role) != Role.OWNER) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
     }
 
-    // AI 이력 조회 권한 TEMP
-    // TODO: UserRole enum 확정되면 교체
+    // AI 이력 조회 권한 (OWNER / MANAGER / MASTER)
     private void validateHistoryAccess(String role) {
-        if (!("OWNER".equals(role) || "MANAGER".equals(role) || "MASTER".equals(role))) {
+        Role r = Role.valueOf(role);
+        if (r != Role.OWNER && r != Role.MANAGER && r != Role.MASTER) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
     }

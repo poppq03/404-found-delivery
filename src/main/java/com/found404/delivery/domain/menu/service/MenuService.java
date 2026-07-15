@@ -3,6 +3,7 @@ package com.found404.delivery.domain.menu.service;
 import com.found404.delivery.domain.menu.dto.*;
 import com.found404.delivery.domain.menu.entity.Menu;
 import com.found404.delivery.domain.menu.repository.MenuRepository;
+import com.found404.delivery.domain.user.entity.Role;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import com.found404.delivery.global.storage.ImageStorage;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 public class MenuService {
 
     private final MenuRepository menuRepository;
-    private final StoreOwnershipChecker storeOwnershipChecker; // TODO: Store 연동 전 현재는 [TEMP] 주입
+    private final StoreOwnershipChecker storeOwnershipChecker; // 실제 구현체(StoreOwnershipCheckerImpl) 주입
     private final ImageStorage imageStorage;
     private final AfterCommitExecutor afterCommitExecutor;
 
@@ -72,8 +73,8 @@ public class MenuService {
 
         Menu menu = getMenuOrThrow(menuId);
 
-        // 권한 확인 TODO: [TEMP]
-        if (menu.isHidden() && !canViewHidden(role)) {
+        // 숨김 메뉴는 볼 수 있는 권한(OWNER/MANAGER/MASTER)일 때만 조회 허용
+        if (menu.isHidden() && !canViewHidden(role, userId, menu.getStoreId())) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
@@ -83,7 +84,8 @@ public class MenuService {
     @Transactional(readOnly = true)
     public MenuListResponseDto getMenus(UUID storeId, String keyword, Boolean soldOut, Long userId, String role, Pageable pageable) {
 
-        // path로 넘어오는 storeId 존재 검증 TODO: Store 연동 후 추가
+        // path로 넘어오는 storeId 존재 검증 (없으면 STORE_NOT_FOUND)
+        storeOwnershipChecker.checkStoreExists(storeId);
 
         // 정렬: 허용 필드(createdAt, displayOrder) -> 그 외는 버림
         List<Sort.Order> orders = pageable.getSort().stream()
@@ -115,7 +117,7 @@ public class MenuService {
                 ? "%"
                 : "%" + keyword + "%";
 
-        boolean includeHidden = canViewHidden(role);
+        boolean includeHidden = canViewHidden(role, userId, storeId);
 
         Page<Menu> menuPage = menuRepository.search(storeId, keywordPattern, soldOut, includeHidden, pageable);
         return MenuListResponseDto.from(menuPage, this::resolveImageUrl);
@@ -199,18 +201,23 @@ public class MenuService {
         return imageStorage.toUrlOrNull(menu.getImageUrl());
     }
 
-    // OWNER + 본인 소유 가게 검증 TEMP
-    // TODO: UserRole enum + Store 연동 시 추가 구현
+    // OWNER + 본인 소유 가게 검증
     private void validateOwnerAccess(String role, Long userId, UUID storeId) {
-        if (!"OWNER".equals(role)) {
+        if (Role.valueOf(role) != Role.OWNER) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         storeOwnershipChecker.checkOwner(userId, storeId);
     }
 
-    // 숨김 메뉴 권한 TEMP
-    // TODO: UserRole enum 확정되면 교체 + OWNER는 본인 소유 가게일 때 true(userId로 소유 확인, Store 연동 후)
-    private boolean canViewHidden(String role) {
-        return "OWNER".equals(role) || "MANAGER".equals(role) || "MASTER".equals(role);
+    // 숨김 메뉴 조회 권한: 관리자(MANAGER/MASTER)는 전부, OWNER는 본인 소유 가게만
+    private boolean canViewHidden(String role, Long userId, UUID storeId) {
+        Role r = Role.valueOf(role);
+        if (r == Role.MANAGER || r == Role.MASTER) {
+            return true;
+        }
+        if (r == Role.OWNER) {
+            return storeOwnershipChecker.isOwner(userId, storeId);
+        }
+        return false;
     }
 }
