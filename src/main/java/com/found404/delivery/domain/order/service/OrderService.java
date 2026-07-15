@@ -171,7 +171,7 @@ public class OrderService {
     private void validateOwnerAccess(Long userId, String role, UUID storeId) {
         validateOwnerRole(role);
 
-        if (!storeRepository.existsByStoreIdAndOwnerId(storeId, Math.toIntExact(userId))) {
+        if (!storeRepository.existsByStoreIdAndOwnerId(storeId, userId)) {
             throw new CustomException(ErrorCode.NOT_STORE_OWNER);
         }
     }
@@ -268,7 +268,7 @@ public class OrderService {
     }
 
     private void validateStoreOwner(Long userId, UUID storeId) {
-        if (!storeRepository.existsByStoreIdAndOwnerId(storeId, Math.toIntExact(userId))) {
+        if (!storeRepository.existsByStoreIdAndOwnerId(storeId, userId)) {
             throw new CustomException(ErrorCode.NOT_STORE_OWNER);
         }
     }
