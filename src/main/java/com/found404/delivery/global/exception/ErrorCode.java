@@ -12,13 +12,14 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "이미지는 5MB를 초과할 수 없습니다."),
     UNSUPPORTED_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않은 파일 확장자입니다."),
+    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
 
     // ===== User =====
     USERNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 중인 username입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 중인 email입니다."),
     INVALID_USERNAME(HttpStatus.BAD_REQUEST, "username 형식이 올바르지 않습니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "password 형식이 올바르지 않습니다. (8~15자, 대소문자+숫자+특수문자)"),
-    INVALID_CREDENTIALS(HttpStatus.CONFLICT, "username 또는 password가 일치하지 않습니다."),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "username 또는 password가 일치하지 않습니다."),
     ACCOUNT_DELETED(HttpStatus.FORBIDDEN, "탈퇴(Soft Delete) 처리된 계정입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않거나 권한이 없는 유저입니다."),
     USER_ALREADY_DELETED(HttpStatus.CONFLICT, "이미 삭제된 계정입니다."),

@@ -1,0 +1,3 @@
+-- 담당: 제희
+-- 테이블: p_review
+-- TODO: CREATE TABLE 문 작성 후 이 주석 삭제
