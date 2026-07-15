@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-// MASTER 전용 기능. StoreMasterController와 동일한 네이밍 규칙 적용
+// MASTER 전용 기능.
 // (Admin{도메인}Controller는 MANAGER/MASTER 공용, {도메인}MasterController는 MASTER 전용).
 @RestController
 @RequiredArgsConstructor
