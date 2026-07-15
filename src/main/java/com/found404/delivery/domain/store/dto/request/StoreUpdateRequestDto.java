@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Getter
 @NoArgsConstructor
 public class StoreUpdateRequestDto {
@@ -13,7 +15,10 @@ public class StoreUpdateRequestDto {
     private String name;    // Store name
 
     @NotNull
-    private Long categoryId;   // 카테고리 id
+    private UUID categoryId;   // 카테고리 id
+
+    @NotNull
+    private UUID regionId;
 
     @NotBlank
     private String phoneNumber;   // 매장 전화번호
@@ -36,8 +41,9 @@ public class StoreUpdateRequestDto {
     @NotBlank
     private String updateBy; // 생성자
 
-
     @NotBlank
     private String deletedBy; //삭제자
+
+    private String imageUrl; //이미지 주소
 
 }
