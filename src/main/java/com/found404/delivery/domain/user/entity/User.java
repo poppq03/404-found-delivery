@@ -20,14 +20,14 @@ public class User extends BaseEntity {
     private Long id;
 
     // 로그인 id
-    @Column(nullable = false, length = 10, unique = true)
+    @Column(nullable = false, length = 10)
     private String username;
 
     // 비밀번호
     @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(nullable = false, length = 255, unique = true)
+    @Column(nullable = false, length = 255)
     private String email;
 
     @Column(nullable = false, length = 50)

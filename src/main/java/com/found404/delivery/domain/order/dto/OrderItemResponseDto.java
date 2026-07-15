@@ -1,6 +1,6 @@
 package com.found404.delivery.domain.order.dto;
 
-import com.found404.delivery.domain.orderItem.entity.OrderItem;
+import com.found404.delivery.domain.orderitem.entity.OrderItem;
 import lombok.Getter;
 
 import java.util.UUID;

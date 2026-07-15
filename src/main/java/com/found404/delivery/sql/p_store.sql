@@ -20,7 +20,7 @@ CREATE TABLE p_store (
                        delivery_fee INT CHECK (delivery_fee >= 0),
 
                        status VARCHAR(20) NOT NULL
-                           CHECK (status IN ('OPEN', 'CLOSED', 'BREAK_TIME', 'PREPARING')),
+                           CHECK (status IN ('OPEN', 'CLOSED', 'BREAK_TIME', 'PREPARING', 'SUSPENDED')),
 
                        is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
