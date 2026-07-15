@@ -1,10 +1,10 @@
-package com.found404.delivery.payment.application.service;
+package com.found404.delivery.domain.payment.service;
 
 import com.found404.delivery.payment.domain.entity.Payment;
 import com.found404.delivery.payment.domain.entity.PaymentMethod;
 import com.found404.delivery.payment.domain.repository.PaymentRepository;
-import com.found404.delivery.payment.presentation.dto.request.PaymentCreateRequest;
-import com.found404.delivery.payment.presentation.dto.response.PaymentResponse;
+import com.found404.delivery.domain.payment.dto.request.PaymentCreateRequest;
+import com.found404.delivery.domain.payment.dto.response.PaymentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

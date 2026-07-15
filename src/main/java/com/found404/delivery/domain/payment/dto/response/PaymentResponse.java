@@ -1,4 +1,4 @@
-package com.found404.delivery.payment.presentation.dto.response;
+package com.found404.delivery.domain.payment.dto.response;
 
 import com.found404.delivery.payment.domain.entity.Payment;
 import com.found404.delivery.payment.domain.entity.PaymentMethod;

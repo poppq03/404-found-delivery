@@ -1,9 +1,9 @@
-package com.found404.delivery.payment.presentation.controller;
+package com.found404.delivery.domain.payment.controller;
 
 import com.found404.delivery.global.response.ApiResponse;
-import com.found404.delivery.payment.application.service.PaymentService;
-import com.found404.delivery.payment.presentation.dto.request.PaymentCreateRequest;
-import com.found404.delivery.payment.presentation.dto.response.PaymentResponse;
+import com.found404.delivery.domain.payment.service.PaymentService;
+import com.found404.delivery.domain.payment.dto.request.PaymentCreateRequest;
+import com.found404.delivery.domain.payment.dto.response.PaymentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
