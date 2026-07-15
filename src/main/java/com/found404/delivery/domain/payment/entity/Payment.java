@@ -2,11 +2,17 @@ package com.found404.delivery.domain.payment.entity;
 
 import com.found404.delivery.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity //DB 테이블과 연결되는 클래스
 @Table(
         name = "p_payment",
@@ -48,6 +54,25 @@ public class Payment extends BaseEntity {
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt;
 
-    protected Payment() {
+    public static  Payment create(
+            UUID orderId,
+            Long userId,
+            PaymentMethod paymentMethod,
+            Integer amount
+    ) {
+        Payment payment = new Payment();
+        payment.orderId = orderId;
+        payment.userId = userId;
+        payment.paymentMethod = paymentMethod;
+        payment.paymentStatus = PaymentStatus.PAID;
+        payment.amount = amount;
+        payment.paidAt = LocalDateTime.now();
+        return payment;
     }
+
+    public void cancel() {
+        this.paymentStatus = PaymentStatus.CANCELED;
+        this.canceledAt = LocalDateTime.now();
+    }
+
 }
