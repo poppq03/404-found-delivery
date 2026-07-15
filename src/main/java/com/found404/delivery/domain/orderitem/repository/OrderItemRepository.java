@@ -1,6 +1,6 @@
-package com.found404.delivery.domain.orderItem.repository;
+package com.found404.delivery.domain.orderitem.repository;
 
-import com.found404.delivery.domain.orderItem.entity.OrderItem;
+import com.found404.delivery.domain.orderitem.entity.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

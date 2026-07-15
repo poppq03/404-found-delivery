@@ -1,6 +1,5 @@
 package com.found404.delivery.domain.store.repository;
 
-import com.found404.delivery.domain.region.entity.Region;
 import com.found404.delivery.domain.store.entity.Store;
 import com.found404.delivery.domain.store.entity.StoreStatus;
 import org.springframework.data.domain.Page;
@@ -82,6 +81,5 @@ public interface StoreRepository extends JpaRepository<Store, UUID> {
 
     Slice<Store> findByStatusAndIsActiveTrue(StoreStatus storeStatus, Pageable pageable);
 
-
-    boolean existsByRegion_RegionIdAndIsActiveTrue(UUID regionId);
+    boolean existsByStoreIdAndOwnerId(UUID storeId, Long ownerId);
 }

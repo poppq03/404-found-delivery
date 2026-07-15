@@ -1,4 +1,4 @@
-package com.found404.delivery.domain.orderItem.entity;
+package com.found404.delivery.domain.orderitem.entity;
 
 import com.found404.delivery.global.entity.BaseEntity;
 import jakarta.persistence.*;

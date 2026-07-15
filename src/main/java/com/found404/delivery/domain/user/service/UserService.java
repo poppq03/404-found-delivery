@@ -147,9 +147,78 @@ public class UserService {
         return UserResponseDto.from(user);
     }
 
+    // MANAGER 계정 생성 (MASTER만 접근 가능, MANAGER는 불가)
+    // 역할은 항상 MANAGER로 고정한다.
+    @Transactional
+    public SignupResponseDto createManager(String requesterRole, ManagerCreateRequestDto request) {
+        validateMasterAccess(requesterRole);
+        validateDuplicate(request.getUsername(), request.getEmail());
+
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        User manager = User.create(
+                request.getUsername(),
+                encodedPassword,
+                request.getEmail(),
+                request.getNickname(),
+                request.getPhone(),
+                Role.MANAGER
+        );
+
+        User savedManager = userRepository.save(manager);
+
+        return SignupResponseDto.from(savedManager);
+    }
+
+    // MANAGER 전용 단건 조회 (MASTER만 접근 가능).
+    public UserResponseDto getManagerByAdmin(String requesterRole, Long targetUserId) {
+        validateMasterAccess(requesterRole);
+        User manager = getManagerOrThrow(targetUserId);
+        return UserResponseDto.from(manager);
+    }
+
+    // MANAGER 계정 정보 수정 (MASTER만 접근 가능)
+    @Transactional
+    public UserResponseDto updateManager(String requesterRole, Long targetUserId, UserUpdateRequestDto request) {
+        validateMasterAccess(requesterRole);
+        User manager = getManagerOrThrow(targetUserId);
+
+        manager.updateProfile(request.getNickname(), request.getPhone(), request.getProfileImage());
+
+        return UserResponseDto.from(manager);
+    }
+
+    // MANAGER 계정 삭제 (MASTER만 접근 가능).
+    @Transactional
+    public String deleteManager(String requesterRole, Long requesterId, Long targetUserId) {
+        validateMasterAccess(requesterRole);
+        User manager = getManagerOrThrow(targetUserId);
+
+        String deletedUsername = manager.getUsername();
+        manager.withdraw(requesterId);
+
+        return deletedUsername;
+    }
+
     // 관리자 전용 API 공통 권한 체크: MANAGER, MASTER만 통과
     private void validateAdminAccess(String role) {
         if (!Role.MANAGER.name().equals(role) && !Role.MASTER.name().equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    // MANAGER 전용 엔드포인트(수정/삭제)에서 공통으로 쓰는 조회.
+    private User getManagerOrThrow(Long userId) {
+        User user = getUserOrThrow(userId);
+        if (user.getRole() != Role.MANAGER) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+        return user;
+    }
+
+    // MASTER 전용 API 공통 권한 체크: MASTER만 통과
+    private void validateMasterAccess(String role) {
+        if (!Role.MASTER.name().equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
     }

@@ -9,6 +9,9 @@ import com.found404.delivery.domain.cartitem.entity.CartItem;
 import com.found404.delivery.domain.cartitem.repository.CartItemRepository;
 import com.found404.delivery.domain.menu.service.MenuInfo;
 import com.found404.delivery.domain.menu.service.MenuQueryService;
+import com.found404.delivery.domain.store.entity.Store;
+import com.found404.delivery.domain.store.repository.StoreRepository;
+import com.found404.delivery.domain.user.entity.Role;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final MenuQueryService menuQueryService;
+    private final StoreRepository storeRepository;
 
 
     @Transactional(readOnly = true)
@@ -144,9 +148,16 @@ public class CartService {
             totalMenuPrice += item.getItemTotalPrice();
         }
 
-        // Store 정보 [TEMP] TODO: Store 연동 후 StoreQueryService로 교체
+        // Store 정보: 장바구니에 가게가 지정돼 있으면 이름, 최소주문금액 조회 (빈 카트면 null 유지)
         String storeName = null;
         Integer minOrderPrice = null;
+        if (cart.getStoreId() != null) {
+            Store store = storeRepository.findById(cart.getStoreId()).orElse(null);
+            if (store != null) {
+                storeName = store.getName();
+                minOrderPrice = store.getMinOrderPrice();
+            }
+        }
 
         return new CartResponseDto(cart.getId(), storeReplaced, cart.getStoreId(),
                 storeName, minOrderPrice, items, totalQuantity, totalMenuPrice);
@@ -158,9 +169,9 @@ public class CartService {
                 null, null, List.of(), 0, 0);
     }
 
-    // CUSTOMER 권한 검증 [TEMP] TODO: UserRole enum 연동 시 교체
+    // CUSTOMER 권한 검증
     private void validateCustomerAccess(String role) {
-        if (!"CUSTOMER".equals(role)) {
+        if (Role.valueOf(role) != Role.CUSTOMER) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
     }
