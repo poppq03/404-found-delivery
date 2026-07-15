@@ -311,7 +311,48 @@ public class StoreService {
     }
 
     // 가게 상태 변경 API
+    @Transactional
+    public StoreStatusResponseDto updateStoreStatusByMaster(Long userId, UUID storeId, StoreStatusRequestDto request) {
+        Store store = getStore(storeId);
+        checkDeletedStore(store);
+        StoreStatus newStatus = request.getStatus();
 
+        if(store.getStatus() == newStatus){
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+        if (newStatus == StoreStatus.PENDING) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+        store.changeStatus(newStatus);
+
+
+        return new StoreStatusResponseDto(
+                store.getStoreId(),
+                store.getStatus(),
+                "관리자에 의해 가게 상태가 변경되었습니다."
+        );
+    }
+
+
+
+    // 가게 삭제 API
+    @Transactional
+    public StoreStatusResponseDto deleteStoreByMaster(Long userId, UUID storeId) {
+        Store store = getStore(storeId);
+        checkDeletedStore(store);
+        String imageUrl = store.getImageUrl();
+        store.delete(userId);
+        if(imageUrl == null && imageUrl.isBlank()){
+            imageStorage.delete(store.getImageUrl());
+        }
+
+        return new StoreStatusResponseDto(
+                store.getStoreId(),
+                store.getStatus(),
+                "관리자에 의해 가게가 삭제되었습니다."
+        );
+
+    }
 
 
 
