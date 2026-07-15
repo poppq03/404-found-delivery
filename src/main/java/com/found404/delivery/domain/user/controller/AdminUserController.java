@@ -1,6 +1,7 @@
 package com.found404.delivery.domain.user.controller;
 
 import com.found404.delivery.domain.user.dto.UserListResponseDto;
+import com.found404.delivery.domain.user.dto.UserResponseDto;
 import com.found404.delivery.domain.user.entity.Role;
 import com.found404.delivery.domain.user.service.UserService;
 import com.found404.delivery.global.response.ApiResponse;
@@ -11,12 +12,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-// MANAGER, MASTER 둘 다 접근 가능한 유저 관리 기능. 팀 컨벤션(Admin{도메인}Controller) 적용.
+// MANAGER, MASTER 둘 다 접근 가능한 유저 관리 기능.
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
@@ -34,6 +32,17 @@ public class AdminUserController {
     ) {
         UserListResponseDto response = userService.searchUsers(
                 userDetails.getRole(), keyword, role, pageable);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // 특정 유저 단건 조회
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUser(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long userId
+    ) {
+        UserResponseDto response = userService.getUserByAdmin(userDetails.getRole(), userId);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
