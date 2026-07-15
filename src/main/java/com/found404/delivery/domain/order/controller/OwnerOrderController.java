@@ -31,7 +31,14 @@ public class OwnerOrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-       return ResponseEntity.ok(ApiResponse.success(orderService.getMyStoreOrders(userDetails.getRole(),storeId, page, size)
+       return ResponseEntity.ok(ApiResponse.success(orderService
+               .getMyStoreOrders(
+                       userDetails.getUserId(),
+                       userDetails.getRole(),
+                       storeId,
+                       page,
+                       size
+               )
        ));
     }
 
@@ -42,7 +49,7 @@ public class OwnerOrderController {
             @PathVariable UUID orderId
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                orderService.getOwnerOrder(userDetails.getRole(), orderId)
+                orderService.getOwnerOrder(userDetails.getUserId(), userDetails.getRole(), orderId)
         ));
     }
 
@@ -52,7 +59,7 @@ public class OwnerOrderController {
             @PathVariable UUID orderId
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                orderService.acceptOrder(userDetails.getRole(), orderId),
+                orderService.acceptOrder(userDetails.getUserId(), userDetails.getRole(), orderId),
                 "주문이 수락되었습니다."
         ));
     }
@@ -64,7 +71,7 @@ public class OwnerOrderController {
             @Valid @RequestBody OrderRejectRequestDto request
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                orderService.rejectOrder(userDetails.getRole(), orderId, request)
+                orderService.rejectOrder(userDetails.getUserId(), userDetails.getRole(), orderId, request)
                 , "주문이 거절 되었습니다."
         ));
     }
@@ -76,7 +83,7 @@ public class OwnerOrderController {
             @Valid @RequestBody OrderStatusUpdateRequestDto request
     ) {
         return ResponseEntity.ok(ApiResponse.success(
-                orderService.changeOwnerOrderStatus(userDetails.getRole(), orderId, request),
+                orderService.changeOwnerOrderStatus(userDetails.getUserId(), userDetails.getRole(), orderId, request),
                 "주문 상태가 변경되었습니다."
         ));
     }

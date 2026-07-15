@@ -9,6 +9,7 @@ import com.found404.delivery.domain.order.entity.Order;
 import com.found404.delivery.domain.order.repository.OrderRepository;
 import com.found404.delivery.domain.orderItem.entity.OrderItem;
 import com.found404.delivery.domain.orderItem.repository.OrderItemRepository;
+import com.found404.delivery.domain.store.repository.StoreRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ public class OrderService {
     private final MenuQueryService menuQueryService;
     private final OrderItemRepository orderItemRepository;
     private final AddressRepository addressRepository;
+    private final StoreRepository storeRepository;
 
     @Transactional
     public OrderResponseDto createOrder(Long userId, @Valid OrderRequestDto request) {
@@ -156,8 +158,8 @@ public class OrderService {
         return order;
     }
 
-    public Page<OrderListResponseDto> getMyStoreOrders(String role, UUID storeId, int page, int size) {
-        validateOwnerRole(role);
+    public Page<OrderListResponseDto> getMyStoreOrders(Long userId, String role, UUID storeId, int page, int size) {
+        validateOwnerAccess(userId, role, storeId);
         validatePageSize(size);
 
         Pageable pageable = PageRequest.of(page, size);
@@ -166,16 +168,22 @@ public class OrderService {
                 .map(OrderListResponseDto::from);
     }
 
+    private void validateOwnerAccess(Long userId, String role, UUID storeId) {
+        validateOwnerRole(role);
+
+        if (!storeRepository.existsByStoreIdAndOwnerId(storeId, userId)) {
+            throw new CustomException(ErrorCode.NOT_STORE_OWNER);
+        }
+    }
+
     private void validateOwnerRole(String role) {
         if (!"OWNER".equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN_ROLE);
         }
     }
 
-    public OrderResponseDto getOwnerOrder(String role, UUID orderId) {
-
-        validateOwnerRole(role);
-        Order order = findOrderById(orderId);
+    public OrderResponseDto getOwnerOrder(Long userId, String role, UUID orderId) {
+        Order order = findOwnerOrder(userId, role, orderId);
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
 
         return OrderResponseDto.from(order, orderItems);
@@ -187,19 +195,16 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponseDto acceptOrder(String role, UUID orderId) {
-        validateOwnerRole(role);
-        Order order = findOrderById(orderId);
+    public OrderResponseDto acceptOrder(Long userId, String role, UUID orderId) {
+        Order order = findOwnerOrder(userId, role, orderId);
         order.accept();
 
         return OrderResponseDto.from(order, orderItemRepository.findAllByOrderId(orderId));
     }
 
     @Transactional
-    public OrderResponseDto rejectOrder(String role, UUID orderId, OrderRejectRequestDto request) {
-        validateOwnerRole(role);
-
-        Order order = findOrderById(orderId);
+    public OrderResponseDto rejectOrder(Long userId, String role, UUID orderId, OrderRejectRequestDto request) {
+        Order order = findOwnerOrder(userId, role, orderId);
         order.reject(request.getReason());
 
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
@@ -207,10 +212,8 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponseDto changeOwnerOrderStatus(String role, UUID orderId, OrderStatusUpdateRequestDto request) {
-        validateOwnerRole(role);
-
-        Order order = findOrderById(orderId);
+    public OrderResponseDto changeOwnerOrderStatus(Long userId, String role, UUID orderId, OrderStatusUpdateRequestDto request) {
+        Order order = findOwnerOrder(userId, role, orderId);
         order.changeOwnerStatus(request.getStatus());
 
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
@@ -251,6 +254,22 @@ public class OrderService {
     private void validateAdminRole(String role) {
         if (!"MANAGER".equals(role) && !"MASTER".equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+
+    private Order findOwnerOrder(Long userId, String role, UUID orderId) {
+        validateOwnerRole(role);
+
+        Order order = findOrderById(orderId);
+        validateStoreOwner(userId, order.getStoreId());
+
+        return order;
+    }
+
+    private void validateStoreOwner(Long userId, UUID storeId) {
+        if (!storeRepository.existsByStoreIdAndOwnerId(storeId, userId)) {
+            throw new CustomException(ErrorCode.NOT_STORE_OWNER);
         }
     }
 }
