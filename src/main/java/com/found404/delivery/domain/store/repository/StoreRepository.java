@@ -51,21 +51,25 @@ public interface StoreRepository extends JpaRepository<Store, UUID> {
 
     // 사용자 :: 키워드 name으로 검색
     @Query("""
-                SELECT s
-                FROM Store s
-                WHERE s.name LIKE %:keyword%
-                AND s.isActive = true
-                AND s.status <> :status
-                ORDER BY
-                    CASE
-                        WHEN s.status = com.found404.delivery.domain.store.entity.StoreStatus.OPEN
-                        THEN 1
-                        ELSE 2
-                    END
+            SELECT s
+            FROM Store s
+            WHERE s.isActive = true
+              AND s.status <> :status
+              AND LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            ORDER BY
+                CASE
+                    WHEN s.status = com.found404.delivery.domain.store.entity.StoreStatus.OPEN THEN 1
+                    WHEN s.status = com.found404.delivery.domain.store.entity.StoreStatus.BREAK_TIME THEN 2
+                    WHEN s.status = com.found404.delivery.domain.store.entity.StoreStatus.CLOSED THEN 3
+                    ELSE 4
+                END,
+                s.createdAt DESC
             """)
-    Slice<Store> searchStores(@Param("keyword") String keyword,
-                              @Param("status") StoreStatus storeStatus,
-                              Pageable pageable);
+    Slice<Store> searchStores(
+            @Param("keyword") String keyword,
+            @Param("status") StoreStatus storeStatus,
+            Pageable pageable
+    );
 
 
     // 사용자  :: 스토어 상세 페이지 조회
