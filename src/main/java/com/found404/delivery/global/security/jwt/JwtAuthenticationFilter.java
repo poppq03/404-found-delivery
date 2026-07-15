@@ -41,9 +41,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Long tokenVersionInJwt = claims.get("tokenVersion", Long.class);
 
             // 토큰에 박힌 tokenVersion과 지금 DB에 저장된 tokenVersion을 비교한다.
-            // User 엔티티 전체가 아니라 tokenVersion 컬럼만 조회해서 매 요청 비용을 최소화.
-            // - DB 값과 다르면(role 변경/탈퇴 등으로 증가) 이 토큰은 이미 예전 권한 스냅샷이므로 인증 처리하지 않는다.
-            // - 유저 자체가 없거나 삭제된 경우도 동일하게 인증 처리하지 않는다.
             boolean isTokenStillValid = userRepository.findTokenVersionById(userId)
                     .map(currentVersion -> currentVersion.equals(tokenVersionInJwt))
                     .orElse(false);

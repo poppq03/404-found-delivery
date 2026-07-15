@@ -210,4 +210,14 @@ public class PaymentService {
             );
         }
     }
+
+    @Transactional
+    public void cancelPaymentByOrderIdIfExists(Long userId, UUID orderId) {
+        paymentRepository.findByOrderId(orderId)
+                .ifPresent(payment -> {
+                    validatePaymentOwner(payment, userId);
+                    validateCancelablePayment(payment);
+                    payment.cancel();
+                });
+    }
 }
