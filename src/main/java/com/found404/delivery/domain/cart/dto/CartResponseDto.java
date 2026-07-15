@@ -16,8 +16,8 @@ public class CartResponseDto {
     private final UUID cartId;
     private final Boolean storeReplaced;   // 담기에서의 세팅값
     private final UUID storeId;
-    private final String storeName;        // Store 연동 전 [TEMP] → null TODO: 연동 후 확인
-    private final Integer minOrderPrice;   // Store 연동 전 [TEMP] → null TODO: 연동 후 확인
+    private final String storeName;        // Store 조회로 채움 (빈 카트면 null)
+    private final Integer minOrderPrice;   // Store 조회로 채움 (빈 카트면 null)
     private final List<Item> items;
     private final Integer totalQuantity;
     private final Integer totalMenuPrice;
