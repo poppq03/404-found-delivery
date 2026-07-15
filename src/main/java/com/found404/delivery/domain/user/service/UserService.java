@@ -147,9 +147,39 @@ public class UserService {
         return UserResponseDto.from(user);
     }
 
+    // MANAGER 계정 생성 (MASTER만 접근 가능, MANAGER는 불가)
+    // 역할은 항상 MANAGER로 고정한다.
+    @Transactional
+    public SignupResponseDto createManager(String requesterRole, ManagerCreateRequestDto request) {
+        validateMasterAccess(requesterRole);
+        validateDuplicate(request.getUsername(), request.getEmail());
+
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        User manager = User.create(
+                request.getUsername(),
+                encodedPassword,
+                request.getEmail(),
+                request.getNickname(),
+                request.getPhone(),
+                Role.MANAGER
+        );
+
+        User savedManager = userRepository.save(manager);
+
+        return SignupResponseDto.from(savedManager);
+    }
+
     // 관리자 전용 API 공통 권한 체크: MANAGER, MASTER만 통과
     private void validateAdminAccess(String role) {
         if (!Role.MANAGER.name().equals(role) && !Role.MASTER.name().equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    // MASTER 전용 API 공통 권한 체크: MASTER만 통과
+    private void validateMasterAccess(String role) {
+        if (!Role.MASTER.name().equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
     }
