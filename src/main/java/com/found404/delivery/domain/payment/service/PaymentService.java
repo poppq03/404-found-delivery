@@ -1,8 +1,8 @@
 package com.found404.delivery.domain.payment.service;
 
-import com.found404.delivery.payment.domain.entity.Payment;
-import com.found404.delivery.payment.domain.entity.PaymentMethod;
-import com.found404.delivery.payment.domain.repository.PaymentRepository;
+import com.found404.delivery.domain.payment.entity.Payment;
+import com.found404.delivery.domain.payment.entity.PaymentMethod;
+import com.found404.delivery.domain.payment.repository.PaymentRepository;
 import com.found404.delivery.domain.payment.dto.request.PaymentCreateRequest;
 import com.found404.delivery.domain.payment.dto.response.PaymentResponse;
 import lombok.RequiredArgsConstructor;
