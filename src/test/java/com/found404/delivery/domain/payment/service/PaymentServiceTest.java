@@ -618,4 +618,115 @@ class PaymentServiceTest {
                 ErrorCode.INVALID_PAYMENT_STATUS
         );
     }
+
+    @Test
+    @DisplayName("주문 취소 연동 성공 - 주문 ID에 해당하는 결제가 있으면 함께 취소한다")
+    void cancelPaymentByOrderIdIfExists_success() {
+        // given
+        Long userId = 1L;
+        UUID orderId = UUID.randomUUID();
+        UUID paymentId = UUID.randomUUID();
+
+        Payment payment = paymentWithId(
+                paymentId,
+                orderId,
+                userId,
+                PaymentStatus.PAID
+        );
+
+        when(paymentRepository.findByOrderId(orderId))
+                .thenReturn(Optional.of(payment));
+
+        // when
+        paymentService.cancelPaymentByOrderIdIfExists(
+                userId,
+                orderId
+        );
+
+        // then
+        assertThat(payment.getPaymentStatus())
+                .isEqualTo(PaymentStatus.CANCELED);
+
+        assertThat(payment.getCanceledAt())
+                .isNotNull();
+    }
+
+    @Test
+    @DisplayName("주문 취소 연동 성공 - 연결된 결제가 없으면 오류 없이 종료한다")
+    void cancelPaymentByOrderIdIfExists_success_paymentNotFound() {
+        // given
+        Long userId = 1L;
+        UUID orderId = UUID.randomUUID();
+
+        when(paymentRepository.findByOrderId(orderId))
+                .thenReturn(Optional.empty());
+
+        // when
+        paymentService.cancelPaymentByOrderIdIfExists(
+                userId,
+                orderId
+        );
+
+        // then
+        verify(paymentRepository)
+                .findByOrderId(orderId);
+    }
+
+    @Test
+    @DisplayName("주문 취소 연동 실패 - 결제 소유자가 아니면 FORBIDDEN 예외")
+    void cancelPaymentByOrderIdIfExists_fail_notPaymentOwner() {
+        // given
+        Long loginUserId = 1L;
+        Long paymentOwnerId = 2L;
+        UUID orderId = UUID.randomUUID();
+
+        Payment payment = paymentWithId(
+                UUID.randomUUID(),
+                orderId,
+                paymentOwnerId,
+                PaymentStatus.PAID
+        );
+
+        when(paymentRepository.findByOrderId(orderId))
+                .thenReturn(Optional.of(payment));
+
+        // when & then
+        assertErrorCode(
+                () -> paymentService.cancelPaymentByOrderIdIfExists(
+                        loginUserId,
+                        orderId
+                ),
+                ErrorCode.FORBIDDEN
+        );
+
+        assertThat(payment.getPaymentStatus())
+                .isEqualTo(PaymentStatus.PAID);
+    }
+
+    @Test
+    @DisplayName("주문 취소 연동 실패 - 결제가 이미 취소됐다면 ALREADY_CANCELED_PAYMENT 예외")
+    void cancelPaymentByOrderIdIfExists_fail_alreadyCanceled() {
+        // given
+        Long userId = 1L;
+        UUID orderId = UUID.randomUUID();
+
+        Payment payment = paymentWithId(
+                UUID.randomUUID(),
+                orderId,
+                userId,
+                PaymentStatus.CANCELED
+        );
+
+        when(paymentRepository.findByOrderId(orderId))
+                .thenReturn(Optional.of(payment));
+
+        // when & then
+        assertErrorCode(
+                () -> paymentService.cancelPaymentByOrderIdIfExists(
+                        userId,
+                        orderId
+                ),
+                ErrorCode.ALREADY_CANCELED_PAYMENT
+        );
+    }
 }
