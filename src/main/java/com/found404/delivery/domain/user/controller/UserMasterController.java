@@ -35,6 +35,17 @@ public class UserMasterController {
                 .body(ApiResponse.success(response, "MANAGER 계정이 생성되었습니다."));
     }
 
+    // MANAGER 전용 단건 조회.
+    @GetMapping("/managers/{userId}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getManager(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long userId
+    ) {
+        UserResponseDto response = userService.getManagerByAdmin(userDetails.getRole(), userId);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     // MANAGER 계정 정보 수정 (닉네임/전화번호/프로필이미지)
     @PatchMapping("/managers/{userId}")
     public ResponseEntity<ApiResponse<UserResponseDto>> updateManager(
