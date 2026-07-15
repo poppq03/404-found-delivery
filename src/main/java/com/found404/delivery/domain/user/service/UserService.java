@@ -8,14 +8,25 @@ import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import com.found404.delivery.global.security.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true) // 읽기 전용 트랜잭션
 public class UserService {
+
+    // 정렬 허용 필드: 그 외 필드로 정렬 요청이 오면 무시하고 기본 정렬(createdAt desc)을 적용
+    private static final Set<String> ALLOWED_SORT = Set.of("createdAt");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -92,13 +103,49 @@ public class UserService {
         user.changePassword(encodedNewPassword);
     }
 
-    // 회원 탈퇴 (Soft Delete). tokenVersion도 같이 증가해서 기존 토큰을 즉시 무효화한다.
+    // 회원 탈퇴 (Soft Delete). tokenVersion도 같이 증가해서 기존 토큰을 즉시 무효화.
     @Transactional
     public void withdraw(Long userId) {
         User user = getUserOrThrow(userId);
         user.withdraw(userId);
     }
 
+    // 관리자용 유저 목록 검색 (MANAGER, MASTER만 접근 가능)
+    public UserListResponseDto searchUsers(String requesterRole, String keyword, Role roleFilter, Pageable pageable) {
+        validateAdminAccess(requesterRole);
+
+        // 정렬: 허용 필드(createdAt)만 인정, 그 외는 버림 (Menu 도메인과 동일한 방침)
+        List<Sort.Order> orders = pageable.getSort().stream()
+                .filter(order -> ALLOWED_SORT.contains(order.getProperty()))
+                .collect(Collectors.toList());
+
+        if (orders.isEmpty()) {
+            orders.add(Sort.Order.desc("createdAt"));
+        }
+
+        // size는 10/30/50만 허용, 그 외 값이 오면 10으로 고정
+        int size = pageable.getPageSize();
+        if (size != 10 && size != 30 && size != 50) {
+            size = 10;
+        }
+
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), size, Sort.by(orders));
+
+        // keyword null/공백이면 전체 조회되도록 LIKE 패턴을 와일드카드로 처리
+        String keywordPattern = (keyword == null || keyword.isBlank())
+                ? "%"
+                : "%" + keyword + "%";
+
+        Page<User> userPage = userRepository.search(keywordPattern, roleFilter, safePageable);
+        return UserListResponseDto.from(userPage);
+    }
+
+    // 관리자 전용 API 공통 권한 체크: MANAGER, MASTER만 통과
+    private void validateAdminAccess(String role) {
+        if (!Role.MANAGER.name().equals(role) && !Role.MASTER.name().equals(role)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+    }
 
     // 공통: userId로 유저 조회, 없으면(또는 이미 탈퇴됐으면 @SQLRestriction에 의해 조회 안 됨) 404
     private User getUserOrThrow(Long userId) {
