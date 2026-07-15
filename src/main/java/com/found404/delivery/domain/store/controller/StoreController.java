@@ -38,7 +38,7 @@ public class StoreController {
 
 
     // 카테고리 별 가게 목록 조회 ( 디테일 카테고리 X 큰 카테고리로 검색 )
-    @GetMapping("/stores/{category}")
+    @GetMapping("/categories/{category}/stores")
     public Slice<StoreSimpleResponseDto> getCategoryStores(
             @PathVariable UUID category,
             @PageableDefault(size = 20,
@@ -50,7 +50,7 @@ public class StoreController {
     }
 
     // 키워드 가게 검색
-    @GetMapping("/stores/{keyword}")
+    @GetMapping("/keyword/{keyword}/stores")
     public Slice<StoreSimpleResponseDto> getKeywordStores(
             @PathVariable String keyword,
             @PageableDefault(size = 20,
