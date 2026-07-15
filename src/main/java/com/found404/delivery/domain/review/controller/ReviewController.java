@@ -5,9 +5,11 @@ import com.found404.delivery.domain.review.dto.ReviewResponse;
 import com.found404.delivery.domain.review.dto.ReviewUpdateRequest;
 import com.found404.delivery.domain.review.service.ReviewService;
 import com.found404.delivery.global.response.ApiResponse;
+import com.found404.delivery.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,9 +27,13 @@ public class ReviewController {
      */
     @PostMapping("/reviews")
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ReviewCreateRequest request
     ) {
-        ReviewResponse response = reviewService.createReview(request);
+        ReviewResponse response = reviewService.createReview(
+                userDetails.getUserId(),
+                request
+        );
 
         return ResponseEntity.ok(
                 ApiResponse.success(response)
@@ -41,7 +47,8 @@ public class ReviewController {
     public ResponseEntity<ApiResponse<ReviewResponse>> getReview(
             @PathVariable UUID reviewId
     ) {
-        ReviewResponse response = reviewService.getReview(reviewId);
+        ReviewResponse response =
+                reviewService.getReview(reviewId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(response)
@@ -68,11 +75,16 @@ public class ReviewController {
      */
     @PatchMapping("/reviews/{reviewId}")
     public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID reviewId,
             @Valid @RequestBody ReviewUpdateRequest request
     ) {
         ReviewResponse response =
-                reviewService.updateReview(reviewId, request);
+                reviewService.updateReview(
+                        userDetails.getUserId(),
+                        reviewId,
+                        request
+                );
 
         return ResponseEntity.ok(
                 ApiResponse.success(response)
@@ -84,10 +96,15 @@ public class ReviewController {
      */
     @PatchMapping("/reviews/{reviewId}/hide")
     public ResponseEntity<ApiResponse<ReviewResponse>> hideReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID reviewId
     ) {
         ReviewResponse response =
-                reviewService.hideReview(reviewId);
+                reviewService.hideReview(
+                        userDetails.getUserId(),
+                        userDetails.getRole(),
+                        reviewId
+                );
 
         return ResponseEntity.ok(
                 ApiResponse.success(response)
@@ -99,10 +116,15 @@ public class ReviewController {
      */
     @PatchMapping("/reviews/{reviewId}/show")
     public ResponseEntity<ApiResponse<ReviewResponse>> showReview(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID reviewId
     ) {
         ReviewResponse response =
-                reviewService.showReview(reviewId);
+                reviewService.showReview(
+                        userDetails.getUserId(),
+                        userDetails.getRole(),
+                        reviewId
+                );
 
         return ResponseEntity.ok(
                 ApiResponse.success(response)
