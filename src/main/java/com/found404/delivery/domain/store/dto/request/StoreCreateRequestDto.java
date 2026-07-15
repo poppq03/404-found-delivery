@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Getter
 @NoArgsConstructor
 public class StoreCreateRequestDto {
@@ -14,7 +16,10 @@ public class StoreCreateRequestDto {
     private String name;    // Store name
 
     @NotNull
-    private Long categoryId;   // 카테고리 id
+    private UUID categoryId;   // 카테고리 id
+
+    @NotNull
+    private UUID regionId;
 
     @NotBlank
     private String phoneNumber;   // 매장 전화번호
@@ -35,9 +40,8 @@ public class StoreCreateRequestDto {
     private Integer deliveryFee; //배달비
 
     @NotBlank
-    private String createdBy; // 생성자
+    private Integer createdBy; // 생성자
 
-    // 대표이미지를 어케할까 고민중 ..흠
-    //private MultipartFile imageUrl;
+    private String imageUrl; //이미지 주소
 
 }

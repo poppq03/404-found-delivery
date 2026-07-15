@@ -1,9 +1,14 @@
 package com.found404.delivery.domain.store.entity;
 
 
+import com.found404.delivery.domain.category.entity.Category;
+import com.found404.delivery.domain.region.entity.Region;
+import com.found404.delivery.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,22 +17,27 @@ import java.util.UUID;
 @Table ( name = "p_store" )
 @Getter
 @Entity
-@NoArgsConstructor
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Store {
 
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY )
+    @UuidGenerator
     private UUID storeId;
 
-    @Column(name = "owner_id", nullable = false)
-    private Integer ownerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="owner_id")
+    private User ownerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @Column(name = "region_id", nullable = false)
-    private UUID regionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="region_id")
+    private Region regionId;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -78,4 +88,46 @@ public class Store {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    public void update(
+            String name,
+            String phoneNumber,
+            String description,
+            String address,
+            String detailAddress,
+            Integer minOrderPrice,
+            Integer deliveryFee,
+            Category categoryId,
+            Region regionId,
+            Integer updatedBy){
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.description = description;
+        this.address = address;
+        this.detailAddress = detailAddress;
+        this.minOrderPrice = minOrderPrice;
+        this.deliveryFee = deliveryFee;
+        this.category = categoryId;
+        this.regionId = regionId;
+        this.updatedAt = LocalDateTime.now();
+        this.updatedBy = updatedBy;
+        // 업데이트 By
+    }
+
+    public void changeImage(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public void delete(Integer deletedBy){
+        this.isActive = false;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
+
+    public void chaneStatus(StoreStatus status) {
+        this.status = status;
+    }
+
+    public void chaneMinOrderPrice(Integer minOrderPrice) {
+        this.minOrderPrice = minOrderPrice;
+    }
 }

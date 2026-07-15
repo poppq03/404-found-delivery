@@ -28,17 +28,13 @@ public class StoreMasterController {
     public List<StoreSimpleResponseDto> storeApprovalList () {
         return null;
     }
-    // 가게 정지
+
+    // 가게 상태변경
     @PatchMapping("/stores/{storeId}/suspend")
     public StoreStatusResponseDto updateStoreSuspend(@PathVariable UUID storeId){
         return null;
     }
 
-    // 정지 해제
-    @PatchMapping("/stores/{storeId}/activate")
-    public StoreStatusResponseDto updateStoreActivate(@PathVariable UUID storeId){
-        return null;
-    }
     // 가게 삭제
     @DeleteMapping("/stores/{storeId}")
     public StoreStatusResponseDto deleteStore(@PathVariable UUID storeId){
