@@ -67,13 +67,13 @@ public class StoreService {
 
 
     // 키워드 목록 조회
-    @Transactional(readOnly = true)
     public Slice<StoreSimpleResponseDto> searchStoresByKeyword(String keyword, Pageable pageable) {
-        return storeRepository.searchStores(
+        Slice<Store> stores = storeRepository.searchStores(
                 keyword,
                 StoreStatus.SUSPENDED,
                 pageable
-        ).map(StoreSimpleResponseDto::from);
+        );
+        return stores.map(StoreSimpleResponseDto::from);
     }
 
 
@@ -124,9 +124,9 @@ public class StoreService {
             }
             // Store Entity 생성
             Store store = Store.builder()
-                    .owner(owner)
+                    .ownerId(owner)
                     .category(category)
-                    .region(region)
+                    .regionId(region)
                     .name(request.getName())
                     .phoneNumber(request.getPhoneNumber())
                     .description(request.getDescription())
@@ -137,6 +137,7 @@ public class StoreService {
                     .imageUrl(imageUrl)
                     .status(StoreStatus.PENDING)
                     .isActive(true)
+                    .createdBy(owner.getId())
                     .build();
 
             // 저장
@@ -146,6 +147,7 @@ public class StoreService {
             return StoreDetailResponseDto.from(saveStore);
 
         }catch (Exception e) {
+            e.printStackTrace();
             if(key != null){
                 imageStorage.delete(key);
             }
@@ -192,7 +194,8 @@ public class StoreService {
                 request.getMinOrderPrice(),
                 request.getDeliveryFee(),
                 category,
-                region
+                region,
+                userId
         );
 
         store.changeImage(imageUrl);
@@ -209,6 +212,7 @@ public class StoreService {
         checkIdentification(userId, store);
         // 이미 삭제되었는지 확인
         checkDeletedStore(store);
+
 
         store.delete(userId);
         imageStorage.delete(store.getImageUrl());
@@ -239,7 +243,6 @@ public class StoreService {
         );
     }
 
-    // 최소 주문금액 수정
     @Transactional
     public StoreStatusResponseDto updateMinOrderPrice(
             Long userId,
@@ -280,46 +283,6 @@ public class StoreService {
         ).map(StorePendingResponseDto::from);
     }
 
-    // 가게 승인 API
-    @Transactional
-    public StoreStatusResponseDto storeApproval(Long userId, UUID storeId) {
-        Store store = getStore(storeId);
-
-        if(!store.getIsActive()){
-            throw new CustomException(ErrorCode.INVALID_INPUT);
-        }
-        // 이미 승인된 경우
-        if(store.getStatus() == StoreStatus.OPEN || store.getStatus() == StoreStatus.CLOSED
-        || store.getStatus() == StoreStatus.BREAK_TIME){
-            throw  new CustomException(ErrorCode.INVALID_INPUT);
-        }
-
-        // 정지된 가게는 승인 불가
-        if(store.getStatus() == StoreStatus.SUSPENDED){
-            throw new CustomException(ErrorCode.INVALID_INPUT);
-        }
-
-        store.approve();
-
-        return new StoreStatusResponseDto(
-                store.getStoreId(),
-                store.getStatus(),
-                "가게 승인이 완료되었습니다."
-        );
-
-
-    }
-
-    // 가게 상태 변경 API
-
-
-
-
-
-
-
-
-
 
 
     // 삭제된 가게인지 확인
@@ -331,7 +294,7 @@ public class StoreService {
 
     // 소유자 확인
     private static void checkIdentification(Long userId, Store store) {
-        if(!store.getOwner().getId().equals(userId)){
+        if(!store.getOwnerId().getId().equals(userId)){
             System.out.println("소유자확인 에러");
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }

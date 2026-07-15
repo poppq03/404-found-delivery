@@ -27,15 +27,15 @@ public class StoreSimpleResponseDto {
 
     //가게 목록
 
-    public static StoreSimpleResponseDto from(Store store) {
+    public static StoreSimpleResponseDto from (Store store) {
         return StoreSimpleResponseDto.builder()
                 .storeId(store.getStoreId())
                 .name(store.getName())
-                .categoryId(store.getCategory().getCategoryId())   // 추가
                 .deliveryFee(store.getDeliveryFee())
                 .minOrderPrice(store.getMinOrderPrice())
                 .imageUrl(store.getImageUrl())
                 .storeStatus(store.getStatus())
                 .build();
     }
+
 }
