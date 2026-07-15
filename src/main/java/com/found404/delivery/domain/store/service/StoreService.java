@@ -101,7 +101,7 @@ public class StoreService {
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (owner.getRole() != Role.OWNER){
-            throw new CustomException(ErrorCode.FORBIDDEN_ROLE);
+            throw new CustomException(ErrorCode.FORBIDDEN);
         }
         // 카테고리 조회
         Category category = getCategory(request.getCategoryId());
