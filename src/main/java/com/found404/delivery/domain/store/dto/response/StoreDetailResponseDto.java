@@ -31,7 +31,7 @@ public class StoreDetailResponseDto {  //가게 상세 조회
 
     private String imageUrl;
 
-    public static StoreDetailResponseDto from(Store store) {
+    public static StoreDetailResponseDto from(Store store, String imageUrl) {
 
         return StoreDetailResponseDto.builder()
                 .storeId(store.getStoreId())
@@ -42,7 +42,7 @@ public class StoreDetailResponseDto {  //가게 상세 조회
                 .detailAddress(store.getDetailAddress())
                 .minOrderPrice(store.getMinOrderPrice())
                 .deliveryFee(store.getDeliveryFee())
-                .imageUrl(store.getImageUrl())
+                .imageUrl(imageUrl)
                 .storeStatus(store.getStatus())
                 .build();
     }
