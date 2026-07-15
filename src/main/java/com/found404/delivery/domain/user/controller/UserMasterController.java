@@ -53,8 +53,9 @@ public class UserMasterController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long userId
     ) {
-        userService.deleteManager(userDetails.getRole(), userDetails.getUserId(), userId);
+        String deletedUsername = userService.deleteManager(userDetails.getRole(), userDetails.getUserId(), userId);
 
-        return ResponseEntity.ok(ApiResponse.success(null, "MANAGER 계정이 삭제되었습니다."));
+        String message = deletedUsername + " MANAGER가 삭제되었습니다.";
+        return ResponseEntity.ok(ApiResponse.success(null, message));
     }
 }

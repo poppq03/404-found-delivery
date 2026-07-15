@@ -183,11 +183,14 @@ public class UserService {
 
     // MANAGER 계정 삭제 (MASTER만 접근 가능).
     @Transactional
-    public void deleteManager(String requesterRole, Long requesterId, Long targetUserId) {
+    public String deleteManager(String requesterRole, Long requesterId, Long targetUserId) {
         validateMasterAccess(requesterRole);
         User manager = getManagerOrThrow(targetUserId);
 
+        String deletedUsername = manager.getUsername();
         manager.withdraw(requesterId);
+
+        return deletedUsername;
     }
 
     // 관리자 전용 API 공통 권한 체크: MANAGER, MASTER만 통과
