@@ -170,6 +170,13 @@ public class UserService {
         return SignupResponseDto.from(savedManager);
     }
 
+    // MANAGER 전용 단건 조회 (MASTER만 접근 가능).
+    public UserResponseDto getManagerByAdmin(String requesterRole, Long targetUserId) {
+        validateMasterAccess(requesterRole);
+        User manager = getManagerOrThrow(targetUserId);
+        return UserResponseDto.from(manager);
+    }
+
     // MANAGER 계정 정보 수정 (MASTER만 접근 가능)
     @Transactional
     public UserResponseDto updateManager(String requesterRole, Long targetUserId, UserUpdateRequestDto request) {
