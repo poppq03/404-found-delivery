@@ -31,10 +31,9 @@ public enum ErrorCode {
     // ===== Store =====
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "가게가 존재하지 않습니다."),
     NOT_STORE_OWNER(HttpStatus.FORBIDDEN, "본인 소유 가게가 아닙니다."),
-    FORBIDDEN_ROLE(HttpStatus.FORBIDDEN, "OWNER 권한이 아닙니다."), // TODO: FORBIDDEN과 중복, 팀 협의 후 통합 검토
 
     // ===== Menu =====
-    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴가 존재하지 않습니다."), // TODO: 원본 문서 405 → 404로 임시 수정, 담당자 확인 필요
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "메뉴가 존재하지 않습니다."),
     MENU_UNAVAILABLE(HttpStatus.CONFLICT, "품절 또는 숨김 처리된 메뉴입니다."),
     AI_GENERATION_FAILED(HttpStatus.BAD_GATEWAY, "AI 설명 생성에 실패했습니다."),
 

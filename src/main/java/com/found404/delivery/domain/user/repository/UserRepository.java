@@ -19,7 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     // JwtAuthenticationFilter에서 매 요청마다 사용.
-    // tokenVersion 컬럼만 조회해서 비용 최소화
     @Query("select u.tokenVersion from User u where u.id = :userId")
     Optional<Long> findTokenVersionById(@Param("userId") Long userId);
 

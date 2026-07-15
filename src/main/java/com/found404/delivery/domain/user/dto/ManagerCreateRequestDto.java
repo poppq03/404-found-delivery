@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 // MASTER가 MANAGER 계정을 생성할 때 쓰는 요청 DTO.
-// 서비스 단에서 Role.MANAGER로 고정한다.
+// 서비스 단에서 Role.MANAGER로 고정
 @Getter
 @NoArgsConstructor
 public class ManagerCreateRequestDto {
