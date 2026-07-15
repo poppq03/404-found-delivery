@@ -101,6 +101,12 @@ public class Order extends BaseEntity {
         if (this.status != OrderStatus.REQUESTED) {
             throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
         }
+
+        LocalDateTime cancelDeadline = getCreatedAt().plusMinutes(5);
+        if (LocalDateTime.now().isAfter(cancelDeadline)) {
+            throw new CustomException(ErrorCode.CANCEL_TIME_EXPIRED);
+        }
+
         this.status = OrderStatus.CANCELED;
         this.canceledAt = LocalDateTime.now();
     }
