@@ -23,7 +23,7 @@ public class StoreOwnershipCheckerImpl implements StoreOwnershipChecker {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
 
-        if (!store.getOwnerId().getId().equals(userId)) {
+        if (!store.getOwner().getId().equals(userId)) {
             throw new CustomException(ErrorCode.NOT_STORE_OWNER);
         }
     }
@@ -41,7 +41,7 @@ public class StoreOwnershipCheckerImpl implements StoreOwnershipChecker {
     @Override
     public boolean isOwner(Long userId, UUID storeId) {
         return storeRepository.findById(storeId)
-                .map(store -> store.getOwnerId().getId().equals(userId))
+                .map(store -> store.getOwner().getId().equals(userId))
                 .orElse(false);
     }
 }
