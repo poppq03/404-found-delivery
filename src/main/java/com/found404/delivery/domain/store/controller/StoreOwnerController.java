@@ -8,6 +8,8 @@ import com.found404.delivery.domain.store.dto.response.StoreDetailResponseDto;
 import com.found404.delivery.domain.store.dto.response.StoreStatusResponseDto;
 import com.found404.delivery.domain.store.service.StoreService;
 import com.found404.delivery.global.security.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
-
+@Tag(name = "Store - OWNER ", description = "master | manager 조회 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/owner")
@@ -27,6 +29,7 @@ public class StoreOwnerController {
     // 본인 가게 검색
 
     // 가게 등록
+    @Operation(summary = "가게 등록", description = "/api/v1/owner/stores")
     @PostMapping("/stores")
     @PreAuthorize("hasRole('OWNER')")
     public StoreDetailResponseDto createStore(
@@ -40,6 +43,7 @@ public class StoreOwnerController {
 
 
     // 가게 수정
+    @Operation(summary = "가게 수정", description = "/api/v1/owner/stores/{storeId}")
     @PatchMapping("/stores/{storeId}")
     @PreAuthorize("hasRole('OWNER')")
     public StoreDetailResponseDto updateStore(
@@ -56,6 +60,7 @@ public class StoreOwnerController {
 
 
     // 가게 삭제
+    @Operation(summary = "가게 삭제", description = "/api/v1/owner/stores/{storeId}")
     @DeleteMapping("/stores/{storeId}")
     @PreAuthorize("hasRole('OWNER')")
     public StoreStatusResponseDto deleteStore(
@@ -67,6 +72,7 @@ public class StoreOwnerController {
     //--------------------------------------------------------------------------------------//
 
     // 영업상태 변경
+    @Operation(summary = "가게 등록", description = "/api/v1/owner/stores/{storeId}/status")
     @PatchMapping("/stores/{storeId}/status")
     public StoreStatusResponseDto updateStoreStatus(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -77,6 +83,7 @@ public class StoreOwnerController {
     }
 
     // 최소 주문 금액 수정
+    @Operation(summary = "최소 주문 금액 수정", description = "/api/v1/owner/stores/{storeId}/minimumOrderPrice")
     @PatchMapping("/stores/{storeId}/minimumOrderPrice")
     public StoreStatusResponseDto updateMinOrderPrice(
             @AuthenticationPrincipal CustomUserDetails userDetails,

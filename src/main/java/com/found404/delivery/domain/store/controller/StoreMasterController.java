@@ -5,6 +5,8 @@ import com.found404.delivery.domain.store.dto.response.StorePendingResponseDto;
 import com.found404.delivery.domain.store.dto.response.StoreStatusResponseDto;
 import com.found404.delivery.domain.store.service.StoreService;
 import com.found404.delivery.global.security.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -15,7 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-
+@Tag(name = "Store - MASTER | MANAGER ", description = "master | manager 조회 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin")
@@ -23,7 +25,8 @@ public class StoreMasterController {
 
     private final StoreService storeService;
 
-    // 가게 승인 대기 목록?
+    // 가게 승인 대기
+    @Operation(summary = "가게 승인 대기목록", description = "/api/v1/admin/stores/approval")
     @GetMapping ("/stores/approval")
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
     public Slice<StorePendingResponseDto> getPendingStores (
@@ -35,6 +38,7 @@ public class StoreMasterController {
 
 
     // 가게 승인
+    @Operation(summary = "가게 승인", description = "/api/v1/admin/stores/{storeId}/approve")
     @PatchMapping("/stores/{storeId}/approve")
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
     public StoreStatusResponseDto storeApproval (
@@ -45,6 +49,7 @@ public class StoreMasterController {
 
 
     // 가게 상태변경
+    @Operation(summary = "가게 상태 변경", description = "/api/v1/admin/stores/{storeId}/status")
     @PatchMapping("/stores/{storeId}/status")
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
     public StoreStatusResponseDto updateStoreStatus(
@@ -55,6 +60,7 @@ public class StoreMasterController {
     }
 
     // 가게 삭제
+    @Operation(summary = "가게 삭제", description = "/api/v1/admin/stores/{storeId}")
     @DeleteMapping("/stores/{storeId}")
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
     public StoreStatusResponseDto deleteStore(
