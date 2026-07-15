@@ -39,9 +39,6 @@ public class StoreCreateRequestDto {
 
     private Integer deliveryFee; //배달비
 
-    @NotBlank
-    private Integer createdBy; // 생성자
-
     private String imageUrl; //이미지 주소
 
 }

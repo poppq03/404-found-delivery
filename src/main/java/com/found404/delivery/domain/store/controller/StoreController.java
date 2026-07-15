@@ -9,10 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -38,7 +35,7 @@ public class StoreController {
 
 
     // 카테고리 별 가게 목록 조회 ( 디테일 카테고리 X 큰 카테고리로 검색 )
-    @GetMapping("/categories/{category}/stores")
+    @GetMapping("/stores/categories/{category}")
     public Slice<StoreSimpleResponseDto> getCategoryStores(
             @PathVariable UUID category,
             @PageableDefault(size = 20,
@@ -50,16 +47,15 @@ public class StoreController {
     }
 
     // 키워드 가게 검색
-    @GetMapping("/keyword/{keyword}/stores")
+    @GetMapping("/stores/search")
     public Slice<StoreSimpleResponseDto> getKeywordStores(
-            @PathVariable String keyword,
+            @RequestParam String keyword,
             @PageableDefault(size = 20,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return storeService.searchStoresByKeyword(keyword,pageable);
     }
-
 
      //가게 상세 조회
     @GetMapping("/stores/{storeId}")

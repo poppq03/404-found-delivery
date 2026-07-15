@@ -38,12 +38,4 @@ public class StoreUpdateRequestDto {
 
     private Integer deliveryFee; //배달비
 
-    @NotBlank
-    private String updateBy; // 생성자
-
-    @NotBlank
-    private String deletedBy; //삭제자
-
-    private String imageUrl; //이미지 주소
-
 }

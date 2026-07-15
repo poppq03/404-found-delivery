@@ -9,6 +9,7 @@ import com.found404.delivery.domain.store.dto.request.StoreCreateRequestDto;
 import com.found404.delivery.domain.store.dto.request.StoreStatusRequestDto;
 import com.found404.delivery.domain.store.dto.request.StoreUpdateRequestDto;
 import com.found404.delivery.domain.store.dto.response.StoreDetailResponseDto;
+import com.found404.delivery.domain.store.dto.response.StorePendingResponseDto;
 import com.found404.delivery.domain.store.dto.response.StoreSimpleResponseDto;
 import com.found404.delivery.domain.store.dto.response.StoreStatusResponseDto;
 import com.found404.delivery.domain.store.entity.Store;
@@ -22,6 +23,7 @@ import com.found404.delivery.global.exception.ErrorCode;
 import com.found404.delivery.global.storage.S3ImageStorage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.lang.NonNull;
@@ -35,6 +37,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @RequestMapping("/api/v1")
+@Slf4j
 public class StoreService {
 
     private final StoreRepository storeRepository;
@@ -64,13 +67,13 @@ public class StoreService {
 
 
     // 키워드 목록 조회
+    @Transactional(readOnly = true)
     public Slice<StoreSimpleResponseDto> searchStoresByKeyword(String keyword, Pageable pageable) {
-        Slice<Store> stores = storeRepository.searchStores(
+        return storeRepository.searchStores(
                 keyword,
                 StoreStatus.SUSPENDED,
                 pageable
-        );
-        return stores.map(StoreSimpleResponseDto::from);
+        ).map(StoreSimpleResponseDto::from);
     }
 
 
@@ -100,12 +103,10 @@ public class StoreService {
         if (owner.getRole() != Role.OWNER){
             throw new CustomException(ErrorCode.FORBIDDEN_ROLE);
         }
-
         // 카테고리 조회
         Category category = getCategory(request.getCategoryId());
         // 지역 조회
         Region region = getRegion(request.getRegionId());
-
         String imageUrl="";
         String extension = "";
         String key = "";
@@ -123,9 +124,9 @@ public class StoreService {
             }
             // Store Entity 생성
             Store store = Store.builder()
-                    .ownerId(owner)
+                    .owner(owner)
                     .category(category)
-                    .regionId(region)
+                    .region(region)
                     .name(request.getName())
                     .phoneNumber(request.getPhoneNumber())
                     .description(request.getDescription())
@@ -134,9 +135,8 @@ public class StoreService {
                     .minOrderPrice(request.getMinOrderPrice())
                     .deliveryFee(request.getDeliveryFee())
                     .imageUrl(imageUrl)
-                    .status(StoreStatus.OPEN)
+                    .status(StoreStatus.PENDING)
                     .isActive(true)
-                    .createdBy(owner.getId().intValue())
                     .build();
 
             // 저장
@@ -153,7 +153,10 @@ public class StoreService {
 
     }
 
+
+
     // 가게 수정
+    @Transactional
     public StoreDetailResponseDto updateStore(
             Long userId,
             UUID storeId,
@@ -165,10 +168,8 @@ public class StoreService {
 
         // 소유자 확인
         checkIdentification(userId, store);
-
         // 카테고리 변경
         Category category = getCategory(request.getCategoryId());
-
         // 지역 변경
         Region region = getRegion(request.getRegionId());
 
@@ -191,8 +192,7 @@ public class StoreService {
                 request.getMinOrderPrice(),
                 request.getDeliveryFee(),
                 category,
-                region,
-                userId.intValue()
+                region
         );
 
         store.changeImage(imageUrl);
@@ -210,8 +210,7 @@ public class StoreService {
         // 이미 삭제되었는지 확인
         checkDeletedStore(store);
 
-
-        store.delete(userId.intValue());
+        store.delete(userId);
         imageStorage.delete(store.getImageUrl());
 
         return new StoreStatusResponseDto(storeId,StoreStatus.SUSPENDED,"성공적으로 삭제되었습니다.");
@@ -232,7 +231,7 @@ public class StoreService {
         if (store.getStatus() == request.getStatus()){
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
-        store.chaneStatus(request.getStatus());
+        store.changeStatus(request.getStatus());
         return new StoreStatusResponseDto(
                 store.getStoreId(),
                 store.getStatus(),
@@ -240,8 +239,7 @@ public class StoreService {
         );
     }
 
-
-
+    // 최소 주문금액 수정
     @Transactional
     public StoreStatusResponseDto updateMinOrderPrice(
             Long userId,
@@ -259,7 +257,7 @@ public class StoreService {
             throw new CustomException(ErrorCode.INVALID_INPUT);
         }
         // 최소 주문 금액 변경
-        store.chaneMinOrderPrice(request.getMinOrderPrice());
+        store.changeMinOrderPrice(request.getMinOrderPrice());
 
 
         return new StoreStatusResponseDto(
@@ -268,6 +266,59 @@ public class StoreService {
                 "최소 주문 금액이 변경되었습니다."
         );
     }
+
+    // ================================ MASTER | MANAGER ================================== //
+
+
+
+    // 가게 승인 대기 목록
+    @Transactional(readOnly = true)
+    public Slice<StorePendingResponseDto> getPendingStores(Pageable pageable) {
+        return storeRepository.findByStatusAndIsActiveTrue(
+                StoreStatus.PENDING,
+                pageable
+        ).map(StorePendingResponseDto::from);
+    }
+
+    // 가게 승인 API
+    @Transactional
+    public StoreStatusResponseDto storeApproval(Long userId, UUID storeId) {
+        Store store = getStore(storeId);
+
+        if(!store.getIsActive()){
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+        // 이미 승인된 경우
+        if(store.getStatus() == StoreStatus.OPEN || store.getStatus() == StoreStatus.CLOSED
+        || store.getStatus() == StoreStatus.BREAK_TIME){
+            throw  new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
+        // 정지된 가게는 승인 불가
+        if(store.getStatus() == StoreStatus.SUSPENDED){
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
+        store.approve();
+
+        return new StoreStatusResponseDto(
+                store.getStoreId(),
+                store.getStatus(),
+                "가게 승인이 완료되었습니다."
+        );
+
+
+    }
+
+    // 가게 상태 변경 API
+
+
+
+
+
+
+
+
 
 
 
@@ -280,7 +331,8 @@ public class StoreService {
 
     // 소유자 확인
     private static void checkIdentification(Long userId, Store store) {
-        if(!store.getOwnerId().equals(userId)){
+        if(!store.getOwner().getId().equals(userId)){
+            System.out.println("소유자확인 에러");
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
     }
@@ -306,7 +358,6 @@ public class StoreService {
                 .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
         return store;
     }
-
 
 
 

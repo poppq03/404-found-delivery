@@ -19,7 +19,7 @@ public class Category {
 
     @Id
     @UuidGenerator
-    @GeneratedValue( strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id", nullable = false, updatable = false)
     private UUID categoryId;
 
     @Column(name = "name", nullable = false)
