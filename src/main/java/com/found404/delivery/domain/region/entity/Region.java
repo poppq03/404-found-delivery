@@ -15,9 +15,8 @@ import java.util.UUID;
 public class Region {
 
     @Id
-    @GeneratedValue
     @UuidGenerator
-    @Column(name = "region_id", nullable = false, updatable = false)
+    @GeneratedValue( strategy = GenerationType.IDENTITY)
     private UUID regionId;
 
     @Column(name = "name", nullable = false)
@@ -30,19 +29,19 @@ public class Region {
     private LocalDateTime createdAt;
 
     @Column(name = "created_by")
-    private Long createdBy;
+    private Integer createdBy;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private  LocalDateTime updatedAt;
 
     @Column(name = "updated_by")
-    private Long updatedBy;
+    private Integer updatedBy;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Column(name = "deleted_by")
-    private Long deletedBy;
+    private Integer deletedBy;
 
 
 

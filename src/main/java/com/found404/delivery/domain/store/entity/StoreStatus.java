@@ -4,6 +4,5 @@ public enum StoreStatus {
     OPEN,
     CLOSED,
     BREAK_TIME,
-    SUSPENDED,
-    PENDING
+    SUSPENDED
 }

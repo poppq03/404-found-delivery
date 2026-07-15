@@ -35,11 +35,8 @@ public class StoreOwnerController {
         return storeService.createStore(userDetails.getUserId(),request,image);
     }
 
-
-
     // 가게 수정
     @PatchMapping("/stores/{storeId}")
-    @PreAuthorize("hasRole('OWNER')")
     public StoreDetailResponseDto updateStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID storeId,
@@ -52,10 +49,8 @@ public class StoreOwnerController {
         // 가게 수정 후 detail page 로드
     }
 
-
     // 가게 삭제
     @DeleteMapping("/stores/{storeId}")
-    @PreAuthorize("hasRole('OWNER')")
     public StoreStatusResponseDto deleteStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID storeId){
