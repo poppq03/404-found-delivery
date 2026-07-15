@@ -24,7 +24,7 @@ public class StorePendingResponseDto {
         return StorePendingResponseDto.builder()
                 .storeId(store.getStoreId())
                 .storeName(store.getName())
-                .ownerName(store.getOwnerId().getNickname())
+                .ownerName(store.getOwner().getNickname())
                 .categoryName(store.getCategory().getName())
                 .deliveryFee(store.getDeliveryFee())
                 .minOrderPrice(store.getMinOrderPrice())
