@@ -101,7 +101,52 @@ public class Order extends BaseEntity {
         if (this.status != OrderStatus.REQUESTED) {
             throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
         }
+
+        LocalDateTime cancelDeadline = getCreatedAt().plusMinutes(5);
+        if (LocalDateTime.now().isAfter(cancelDeadline)) {
+            throw new CustomException(ErrorCode.CANCEL_TIME_EXPIRED);
+        }
+
         this.status = OrderStatus.CANCELED;
         this.canceledAt = LocalDateTime.now();
+    }
+
+    public void accept() {
+        if (this.status != OrderStatus.REQUESTED) {
+            throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.status = OrderStatus.ACCEPTED;
+    }
+
+    public void reject(String reason) {
+        if (this.status != OrderStatus.REQUESTED) {
+            throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.status = OrderStatus.REJECTED;
+        this.statusReason = reason;
+    }
+
+    public void changeOwnerStatus(OrderStatus nextStatus) {
+        boolean validTransition =
+                (this.status == OrderStatus.ACCEPTED && nextStatus == OrderStatus.COOKING)
+                || (this.status == OrderStatus.COOKING && nextStatus == OrderStatus.DELIVERING)
+                || (this.status == OrderStatus.DELIVERING && nextStatus == OrderStatus.COMPLETED);
+
+        if (!validTransition) {
+            throw new CustomException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.status = nextStatus;
+    }
+
+    public void changeAdminStatus(OrderStatus nextStatus) {
+        if (nextStatus == null) {
+            throw new CustomException(ErrorCode.INVALID_STATUS_VALUE);
+        }
+
+        this.status = nextStatus;
+
+        if (nextStatus == OrderStatus.CANCELED) {
+            this.canceledAt = LocalDateTime.now();
+        }
     }
 }
