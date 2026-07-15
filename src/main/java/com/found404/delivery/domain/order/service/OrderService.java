@@ -7,8 +7,8 @@ import com.found404.delivery.domain.menu.service.MenuQueryService;
 import com.found404.delivery.domain.order.dto.*;
 import com.found404.delivery.domain.order.entity.Order;
 import com.found404.delivery.domain.order.repository.OrderRepository;
-import com.found404.delivery.domain.orderItem.entity.OrderItem;
-import com.found404.delivery.domain.orderItem.repository.OrderItemRepository;
+import com.found404.delivery.domain.orderitem.entity.OrderItem;
+import com.found404.delivery.domain.orderitem.repository.OrderItemRepository;
 import com.found404.delivery.domain.store.repository.StoreRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
@@ -178,7 +178,7 @@ public class OrderService {
 
     private void validateOwnerRole(String role) {
         if (!"OWNER".equals(role)) {
-            throw new CustomException(ErrorCode.FORBIDDEN_ROLE);
+            throw new CustomException(ErrorCode.FORBIDDEN);
         }
     }
 
