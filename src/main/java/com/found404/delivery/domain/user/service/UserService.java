@@ -170,11 +170,43 @@ public class UserService {
         return SignupResponseDto.from(savedManager);
     }
 
+    // MANAGER 계정 정보 수정 (MASTER만 접근 가능)
+    @Transactional
+    public UserResponseDto updateManager(String requesterRole, Long targetUserId, UserUpdateRequestDto request) {
+        validateMasterAccess(requesterRole);
+        User manager = getManagerOrThrow(targetUserId);
+
+        manager.updateProfile(request.getNickname(), request.getPhone(), request.getProfileImage());
+
+        return UserResponseDto.from(manager);
+    }
+
+    // MANAGER 계정 삭제 (MASTER만 접근 가능).
+    @Transactional
+    public String deleteManager(String requesterRole, Long requesterId, Long targetUserId) {
+        validateMasterAccess(requesterRole);
+        User manager = getManagerOrThrow(targetUserId);
+
+        String deletedUsername = manager.getUsername();
+        manager.withdraw(requesterId);
+
+        return deletedUsername;
+    }
+
     // 관리자 전용 API 공통 권한 체크: MANAGER, MASTER만 통과
     private void validateAdminAccess(String role) {
         if (!Role.MANAGER.name().equals(role) && !Role.MASTER.name().equals(role)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
+    }
+
+    // MANAGER 전용 엔드포인트(수정/삭제)에서 공통으로 쓰는 조회.
+    private User getManagerOrThrow(Long userId) {
+        User user = getUserOrThrow(userId);
+        if (user.getRole() != Role.MANAGER) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+        return user;
     }
 
     // MASTER 전용 API 공통 권한 체크: MASTER만 통과
