@@ -1,8 +1,10 @@
 package com.found404.delivery.domain.store.controller;
 
-import com.found404.delivery.domain.store.dto.request.*;
+import com.found404.delivery.domain.store.dto.request.MinOrderPriceUpdateRequestDto;
+import com.found404.delivery.domain.store.dto.request.StoreCreateRequestDto;
+import com.found404.delivery.domain.store.dto.request.StoreStatusRequestDto;
+import com.found404.delivery.domain.store.dto.request.StoreUpdateRequestDto;
 import com.found404.delivery.domain.store.dto.response.StoreDetailResponseDto;
-import com.found404.delivery.domain.store.dto.response.StoreImageUpdateResponseDto;
 import com.found404.delivery.domain.store.dto.response.StoreStatusResponseDto;
 import com.found404.delivery.domain.store.service.StoreService;
 import com.found404.delivery.global.security.CustomUserDetails;
