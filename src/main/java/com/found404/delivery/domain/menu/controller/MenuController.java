@@ -45,7 +45,10 @@ public class MenuController {
             @PathVariable UUID menuId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        MenuDetailResponseDto response = menuService.getMenu(menuId, userDetails.getUserId(), userDetails.getRole());
+        Long userId = (userDetails != null) ? userDetails.getUserId() : null;
+        String role = (userDetails != null) ? userDetails.getRole() : null;
+
+        MenuDetailResponseDto response = menuService.getMenu(menuId, userId, role);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -59,8 +62,11 @@ public class MenuController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
 
+        Long userId = (userDetails != null) ? userDetails.getUserId() : null;
+        String role = (userDetails != null) ? userDetails.getRole() : null;
+
         MenuListResponseDto response = menuService.getMenus(
-                storeId, keyword, soldOut, userDetails.getUserId(), userDetails.getRole(), pageable);
+                storeId, keyword, soldOut, userId, role, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
