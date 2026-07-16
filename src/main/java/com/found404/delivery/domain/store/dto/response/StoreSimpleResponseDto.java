@@ -25,9 +25,11 @@ public class StoreSimpleResponseDto {
 
     private StoreStatus storeStatus;
 
+    private Double averageRating;
+
     //가게 목록
 
-    public static StoreSimpleResponseDto from(Store store, String imageUrl) {
+    public static StoreSimpleResponseDto from(Store store, String imageUrl,Double averageRating) {
         return StoreSimpleResponseDto.builder()
                 .storeId(store.getStoreId())
                 .name(store.getName())
@@ -36,6 +38,18 @@ public class StoreSimpleResponseDto {
                 .minOrderPrice(store.getMinOrderPrice())
                 .imageUrl(imageUrl)
                 .storeStatus(store.getStatus())
+                .averageRating(
+                        roundRating(averageRating)
+                )
                 .build();
+    }
+
+    private static Double roundRating(Double rating) {
+
+        if (rating == null) {
+            return 0.0;
+        }
+
+        return Math.round(rating * 10) / 10.0;
     }
 }
