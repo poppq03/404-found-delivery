@@ -1,12 +1,13 @@
 -- 테이블: p_payment
 CREATE TABLE IF NOT EXISTS p_payment (
-                                         payment_id UUID NOT NULL,
-                                         order_id UUID NOT NULL,
-                                         user_id BIGINT NOT NULL,
-                                         payment_method VARCHAR(30) NOT NULL,
+    payment_id UUID NOT NULL,
+    order_id UUID NOT NULL,
+    user_id BIGINT NOT NULL,
+    payment_method VARCHAR(30) NOT NULL,
     payment_status VARCHAR(30) NOT NULL,
     amount INTEGER NOT NULL,
     paid_at TIMESTAMP,
+    canceled_at TIMESTAMP,
 
     created_at TIMESTAMP,
     created_by BIGINT,
