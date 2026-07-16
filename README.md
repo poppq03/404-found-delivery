@@ -37,15 +37,15 @@
 
 ## 팀원 및 담당 도메인
 
-| 이름 | 담당 도메인 | GitHub |
-| --- | --- | --- |
-| 민지 | User, Global (공통 설정/보안/예외처리) | |
-| 서인 | Store, Category, Region | |
-| 초인 | Menu, AiRequest, Cart, CartItem | |
-| 우현 | Order, OrderItem, Address | |
-| 제희 | Payment, Review | |
+| 이름 | 담당 도메인 |
+| --- | --- |
+| 민지 | User, Global (공통 설정/보안/예외처리) | 
+| 서인 | Store, Category, Region | 
+| 초인 | Menu, AiRequest, Cart, CartItem | 
+| 우현 | Order, OrderItem, Address | 
+| 제희 | Payment, Review | 
 
-(※ GitHub 프로필 링크 각자 채워넣기)
+
 
 ## 주요 기능
 
