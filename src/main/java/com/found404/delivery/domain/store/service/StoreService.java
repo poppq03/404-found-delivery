@@ -4,6 +4,7 @@ import com.found404.delivery.domain.category.entity.Category;
 import com.found404.delivery.domain.category.repository.CategoryRepository;
 import com.found404.delivery.domain.region.entity.Region;
 import com.found404.delivery.domain.region.repository.RegionRepository;
+import com.found404.delivery.domain.review.service.ReviewService;
 import com.found404.delivery.domain.store.dto.request.MinOrderPriceUpdateRequestDto;
 import com.found404.delivery.domain.store.dto.request.StoreCreateRequestDto;
 import com.found404.delivery.domain.store.dto.request.StoreStatusRequestDto;
@@ -32,6 +33,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -45,26 +48,73 @@ public class StoreService {
     private final RegionRepository regionRepository;
     private final ImageStorage imageStorage;
     private final AfterCommitExecutor afterCommitExecutor;
+    private final ReviewService reviewService;
 
     // ================================ All ==================================== //
     // 가게목록 조회
     public Slice<StoreSimpleResponseDto> getStores(Pageable pageable) {
         Slice<Store> stores = storeRepository.findStoreList(pageable);
-        return stores.map(s -> StoreSimpleResponseDto.from(s, resolveImageUrl(s)));
+        List<UUID> storeIds = stores.getContent()
+                .stream()
+                .map(Store::getStoreId)
+                .toList();
+        Map<UUID, Double> ratings =
+                reviewService.getAverageRatingsByStoreIds(storeIds);
+        return stores.map(store ->
+                StoreSimpleResponseDto.from(
+                        store,
+                        resolveImageUrl(store),
+                        ratings.get(store.getStoreId())
+                )
+        );
     }
 
     // 카테고리 별 가게 목록 조회
     @Transactional(readOnly = true)
     public Slice<StoreSimpleResponseDto> getStoresByCategory(UUID categoryId, Pageable pageable) {
         Slice<Store> stores = storeRepository.findStoreListByCategory(categoryId, StoreStatus.SUSPENDED, pageable);
-        return stores.map(s -> StoreSimpleResponseDto.from(s, resolveImageUrl(s)));
+
+        Map<UUID, Double> ratings =
+                reviewService.getAverageRatingsByStoreIds(
+                        stores.getContent()
+                                .stream()
+                                .map(Store::getStoreId)
+                                .toList()
+                );
+        return stores.map(store ->
+                StoreSimpleResponseDto.from(
+                        store,
+                        resolveImageUrl(store),
+                        ratings.get(store.getStoreId())
+                )
+        );
     }
 
     // 키워드 목록 조회
     @Transactional(readOnly = true)
     public Slice<StoreSimpleResponseDto> searchStoresByKeyword(String keyword, Pageable pageable) {
-        return storeRepository.searchStores(keyword, StoreStatus.SUSPENDED, pageable)
-                .map(s -> StoreSimpleResponseDto.from(s, resolveImageUrl(s)));
+        Slice<Store> stores =
+                storeRepository.searchStores(
+                        keyword,
+                        StoreStatus.SUSPENDED,
+                        pageable
+                );
+
+        Map<UUID, Double> ratings =
+                reviewService.getAverageRatingsByStoreIds(
+                        stores.getContent()
+                                .stream()
+                                .map(Store::getStoreId)
+                                .toList()
+                );
+
+        return stores.map(store ->
+                StoreSimpleResponseDto.from(
+                        store,
+                        resolveImageUrl(store),
+                        ratings.get(store.getStoreId())
+                )
+        );
     }
 
     // 가게 세부사항 조회
