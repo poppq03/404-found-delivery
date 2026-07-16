@@ -110,8 +110,8 @@ http://15.164.251.141:8080/swagger-ui/index.html
 
 ## 🏗 인프라 설계도
 
-`docs/infra.png` 경로에 이미지를 추가하면 아래에 표시됩니다.
-![인프라 설계도](./docs/infra.png)
+`docs/infra.jpg` 경로에 이미지를 추가하면 아래에 표시됩니다.
+![인프라 설계도](./docs/infra.jpg)
 
 ---
 
