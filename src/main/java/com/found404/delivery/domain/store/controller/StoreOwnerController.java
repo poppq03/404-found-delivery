@@ -41,7 +41,7 @@ public class StoreOwnerController {
     @PostMapping(value = "/stores", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<StoreDetailResponseDto> createStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "image", required = true) MultipartFile image,
             @Valid @RequestPart("data") StoreCreateRequestDto request
     ) {
         StoreDetailResponseDto response = storeService.createStore(
