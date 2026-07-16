@@ -31,7 +31,7 @@ public class StoreController {
     @GetMapping("/stores")
     public ApiResponse<Slice<StoreSimpleResponseDto>> getAllStores(
             @PageableDefault(
-                    size = 20,
+                    size = 10,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
             ) Pageable pageable
@@ -51,7 +51,7 @@ public class StoreController {
     public ApiResponse<Slice<StoreSimpleResponseDto>> getCategoryStores(
             @PathVariable UUID categoryId,
             @PageableDefault(
-                    size = 20,
+                    size = 10,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
             ) Pageable pageable
@@ -71,7 +71,7 @@ public class StoreController {
     public ApiResponse<Slice<StoreSimpleResponseDto>> getKeywordStores(
             @RequestParam String keyword,
             @PageableDefault(
-                    size = 20,
+                    size = 10,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
             ) Pageable pageable

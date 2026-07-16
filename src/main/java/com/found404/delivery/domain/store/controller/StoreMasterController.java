@@ -39,7 +39,7 @@ public class StoreMasterController {
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
     public ApiResponse<Slice<StorePendingResponseDto>> getPendingStores(
             @PageableDefault(
-                    size = 20,
+                    size = 10,
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
             ) Pageable pageable
