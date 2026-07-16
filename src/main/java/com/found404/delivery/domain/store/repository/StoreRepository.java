@@ -84,4 +84,6 @@ public interface StoreRepository extends JpaRepository<Store, UUID> {
     boolean existsByStoreIdAndOwnerId(UUID storeId, Long ownerId);
 
     boolean existsByRegion_RegionIdAndIsActiveTrue(UUID regionId);
+
+    boolean existsByCategory_CategoryIdAndIsActiveTrue(UUID categoryId);
 }
