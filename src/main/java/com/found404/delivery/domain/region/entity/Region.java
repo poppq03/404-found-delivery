@@ -1,6 +1,8 @@
 package com.found404.delivery.domain.region.entity;
 
+import com.found404.delivery.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
@@ -11,8 +13,8 @@ import java.util.UUID;
 @Table( name = "p_region" )
 @Getter
 @Entity
-@NoArgsConstructor
-public class Region {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Region extends BaseEntity {
 
     @Id
     @GeneratedValue
@@ -20,32 +22,25 @@ public class Region {
     @Column(name = "region_id", nullable = false, updatable = false)
     private UUID regionId;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
 
-    @Column(name = "created_by")
-    private Long createdBy;
+    private Region (String name){
+        this.name = name;
+        this.isActive = true;
+    }
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    public static Region createRegion(String name){
+        return new Region(name);
+    }
 
-    @Column(name = "updated_by")
-    private Long updatedBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private Long deletedBy;
-
-
-
-
+    public void delete(Long userId) {
+        this.isActive = false;
+        markDeleted(userId);
+    }
 
 }

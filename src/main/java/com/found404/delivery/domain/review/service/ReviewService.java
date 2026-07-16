@@ -1,17 +1,27 @@
 package com.found404.delivery.domain.review.service;
 
+import com.found404.delivery.domain.order.entity.Order;
+import com.found404.delivery.domain.order.entity.OrderStatus;
+import com.found404.delivery.domain.order.repository.OrderRepository;
 import com.found404.delivery.domain.review.dto.ReviewCreateRequest;
 import com.found404.delivery.domain.review.dto.ReviewResponse;
 import com.found404.delivery.domain.review.dto.ReviewUpdateRequest;
 import com.found404.delivery.domain.review.entity.Review;
 import com.found404.delivery.domain.review.repository.ReviewRepository;
+import com.found404.delivery.domain.store.repository.StoreRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.found404.delivery.domain.review.repository.StoreRatingAverage;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -20,28 +30,39 @@ import java.util.UUID;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final OrderRepository orderRepository;
+    private final StoreRepository storeRepository;
 
     /**
      * 리뷰 생성
      */
     @Transactional
-    public ReviewResponse createReview(ReviewCreateRequest request) {
+    public ReviewResponse createReview(
+            Long userId,
+            ReviewCreateRequest request
+    ) {
         validateRating(request.rating());
-        validateAlreadyReviewedOrder(request.orderId());
 
-        // TODO: 로그인/인증 기능 연결 후 JWT에서 로그인 사용자 ID 가져오기
-        Long userId = 1L;
+        // 실제 존재하는 주문인지 확인
+        Order order = findOrder(request.orderId());
 
-        // TODO: Order 도메인 연결 후 아래 내용 검증
-        // 1. 실제 존재하는 주문인지
-        // 2. 배송 완료된 주문인지
-        // 3. 요청한 storeId와 주문의 storeId가 같은지
-        // 4. 로그인 사용자가 해당 주문의 소유자인지
+        // 로그인 사용자가 해당 주문을 한 사용자인지 확인
+        validateOrderOwner(order, userId);
 
+        // 주문이 완료 상태인지 확인
+        validateOrderCompleted(order);
+
+        // 해당 주문에 이미 작성된 리뷰가 있는지 확인
+        validateAlreadyReviewedOrder(order.getId());
+
+        /*
+         * storeId는 클라이언트가 전달한 값을 사용하지 않고
+         * 실제 주문에 저장된 storeId를 사용한다.
+         */
         Review review = Review.create(
-                request.orderId(),
+                order.getId(),
                 userId,
-                request.storeId(),
+                order.getStoreId(),
                 request.rating(),
                 request.content()
         );
@@ -76,6 +97,7 @@ public class ReviewService {
      */
     @Transactional
     public ReviewResponse updateReview(
+            Long userId,
             UUID reviewId,
             ReviewUpdateRequest request
     ) {
@@ -83,7 +105,9 @@ public class ReviewService {
 
         Review review = findReview(reviewId);
 
-        // TODO: 로그인/인증 연결 후 리뷰 작성자 본인인지 검증
+        // 로그인 사용자가 리뷰 작성자인지 확인
+        validateReviewAuthor(review, userId);
+
         review.update(
                 request.rating(),
                 request.content()
@@ -96,10 +120,23 @@ public class ReviewService {
      * 리뷰 숨김 처리
      */
     @Transactional
-    public ReviewResponse hideReview(UUID reviewId) {
+    public ReviewResponse hideReview(
+            Long userId,
+            String role,
+            UUID reviewId
+    ) {
         Review review = findReview(reviewId);
 
-        // TODO: MANAGER 또는 해당 가게 OWNER 권한인지 검증
+        /*
+         * MANAGER, MASTER 또는
+         * 해당 가게를 소유한 OWNER인지 확인
+         */
+        validateReviewManagePermission(
+                review,
+                userId,
+                role
+        );
+
         review.hide();
 
         return ReviewResponse.from(review);
@@ -109,10 +146,23 @@ public class ReviewService {
      * 리뷰 숨김 해제
      */
     @Transactional
-    public ReviewResponse showReview(UUID reviewId) {
+    public ReviewResponse showReview(
+            Long userId,
+            String role,
+            UUID reviewId
+    ) {
         Review review = findReview(reviewId);
 
-        // TODO: MANAGER 또는 해당 가게 OWNER 권한인지 검증
+        /*
+         * MANAGER, MASTER 또는
+         * 해당 가게를 소유한 OWNER인지 확인
+         */
+        validateReviewManagePermission(
+                review,
+                userId,
+                role
+        );
+
         review.show();
 
         return ReviewResponse.from(review);
@@ -124,7 +174,21 @@ public class ReviewService {
     private Review findReview(UUID reviewId) {
         return reviewRepository.findById(reviewId)
                 .orElseThrow(() ->
-                        new CustomException(ErrorCode.REVIEW_NOT_FOUND)
+                        new CustomException(
+                                ErrorCode.REVIEW_NOT_FOUND
+                        )
+                );
+    }
+
+    /**
+     * 주문 조회 공통 메서드
+     */
+    private Order findOrder(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new CustomException(
+                                ErrorCode.ORDER_NOT_FOUND
+                        )
                 );
     }
 
@@ -140,6 +204,79 @@ public class ReviewService {
     }
 
     /**
+     * 로그인 사용자가 주문한 본인인지 검증
+     */
+    private void validateOrderOwner(
+            Order order,
+            Long userId
+    ) {
+        if (!Objects.equals(order.getUserId(), userId)) {
+            throw new CustomException(
+                    ErrorCode.FORBIDDEN
+            );
+        }
+    }
+
+    /**
+     * 배송 완료된 주문인지 검증
+     */
+    private void validateOrderCompleted(Order order) {
+        if (order.getStatus() != OrderStatus.COMPLETED) {
+            throw new CustomException(
+                    ErrorCode.INVALID_ORDER_STATUS
+            );
+        }
+    }
+
+    /**
+     * 로그인 사용자가 리뷰 작성자인지 검증
+     */
+    private void validateReviewAuthor(
+            Review review,
+            Long userId
+    ) {
+        if (!Objects.equals(review.getUserId(), userId)) {
+            throw new CustomException(
+                    ErrorCode.FORBIDDEN
+            );
+        }
+    }
+
+    /**
+     * 리뷰 숨김·해제 권한 검증
+     *
+     * 허용 대상:
+     * 1. MANAGER
+     * 2. MASTER
+     * 3. 해당 리뷰 가게를 소유한 OWNER
+     */
+    private void validateReviewManagePermission(
+            Review review,
+            Long userId,
+            String role
+    ) {
+        if ("MANAGER".equals(role) || "MASTER".equals(role)) {
+            return;
+        }
+
+        if ("OWNER".equals(role)) {
+            boolean isStoreOwner =
+                    storeRepository.existsByStoreIdAndOwnerId(
+                            review.getStoreId(),
+                            userId
+                    );
+
+            if (isStoreOwner) {
+                return;
+            }
+        }
+
+        throw new CustomException(
+                ErrorCode.FORBIDDEN
+        );
+    }
+
+    /**
      * 별점 범위 검증
      */
     private void validateRating(Integer rating) {
@@ -148,5 +285,24 @@ public class ReviewService {
                     ErrorCode.INVALID_RATING
             );
         }
+    }
+
+    /**
+     * 여러 가게의 평균 평점을 한 번에 조회
+     */
+    public Map<UUID, Double> getAverageRatingsByStoreIds(
+            Collection<UUID> storeIds
+    ) {
+        if (storeIds == null || storeIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return reviewRepository
+                .findAverageRatingsByStoreIds(storeIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        StoreRatingAverage::getStoreId,
+                        StoreRatingAverage::getAverageRating
+                ));
     }
 }

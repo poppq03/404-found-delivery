@@ -1,11 +1,16 @@
 package com.found404.delivery.domain.store.controller;
 
-import com.found404.delivery.domain.store.dto.request.*;
+import com.found404.delivery.domain.store.dto.request.MinOrderPriceUpdateRequestDto;
+import com.found404.delivery.domain.store.dto.request.StoreCreateRequestDto;
+import com.found404.delivery.domain.store.dto.request.StoreStatusRequestDto;
+import com.found404.delivery.domain.store.dto.request.StoreUpdateRequestDto;
 import com.found404.delivery.domain.store.dto.response.StoreDetailResponseDto;
-import com.found404.delivery.domain.store.dto.response.StoreImageUpdateResponseDto;
 import com.found404.delivery.domain.store.dto.response.StoreStatusResponseDto;
 import com.found404.delivery.domain.store.service.StoreService;
+import com.found404.delivery.global.response.ApiResponse;
 import com.found404.delivery.global.security.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,74 +20,115 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+@Tag(
+        name = "Store - OWNER",
+        description = "OWNER 가게 관리 API"
+)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/owner")
+@PreAuthorize("hasRole('OWNER')")
 public class StoreOwnerController {
 
     private final StoreService storeService;
 
-    // 본인 가게 검색
-
     // 가게 등록
+    @Operation(
+            summary = "가게 등록",
+            description = "POST /api/v1/owner/stores"
+    )
     @PostMapping("/stores")
-    @PreAuthorize("hasRole('OWNER')")
-    public StoreDetailResponseDto createStore(
+    public ApiResponse<StoreDetailResponseDto> createStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestPart(value = "image", required=false) MultipartFile image,
-            @Valid @RequestPart (value = "request") StoreCreateRequestDto request
-    ){
-        return storeService.createStore(userDetails.getUserId(),request,image);
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @Valid @RequestPart("request") StoreCreateRequestDto request
+    ) {
+        StoreDetailResponseDto response = storeService.createStore(
+                userDetails.getUserId(),
+                request,
+                image
+        );
+
+        return ApiResponse.success(response, "가게 등록 요청이 완료되었습니다.");
     }
-
-
 
     // 가게 수정
+    @Operation(
+            summary = "가게 수정",
+            description = "PATCH /api/v1/owner/stores/{storeId}"
+    )
     @PatchMapping("/stores/{storeId}")
-    @PreAuthorize("hasRole('OWNER')")
-    public StoreDetailResponseDto updateStore(
+    public ApiResponse<StoreDetailResponseDto> updateStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID storeId,
-            @RequestPart(value = "image", required=false) MultipartFile image,
-            @Valid @RequestPart(value = "request") StoreUpdateRequestDto request){
-        // User 정보 / storeId
-        // 가게가 user의 소유인지 확인 | 권한이 owner인지 확인
-        // 수정
-        return storeService.updateStore(userDetails.getUserId(),storeId,image,request);
-        // 가게 수정 후 detail page 로드
-    }
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @Valid @RequestPart("request") StoreUpdateRequestDto request
+    ) {
+        StoreDetailResponseDto response = storeService.updateStore(
+                userDetails.getUserId(),
+                storeId,
+                image,
+                request
+        );
 
+        return ApiResponse.success(response, "가게 정보가 수정되었습니다.");
+    }
 
     // 가게 삭제
+    @Operation(
+            summary = "가게 삭제",
+            description = "DELETE /api/v1/owner/stores/{storeId}"
+    )
     @DeleteMapping("/stores/{storeId}")
-    @PreAuthorize("hasRole('OWNER')")
-    public StoreStatusResponseDto deleteStore(
+    public ApiResponse<StoreStatusResponseDto> deleteStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable UUID storeId){
-        return storeService.deleteStore(userDetails.getUserId(),storeId);
+            @PathVariable UUID storeId
+    ) {
+        StoreStatusResponseDto response = storeService.deleteStore(
+                userDetails.getUserId(),
+                storeId
+        );
+
+        return ApiResponse.success(response, "가게가 삭제되었습니다.");
     }
 
-    //--------------------------------------------------------------------------------------//
-
-    // 영업상태 변경
+    // 영업 상태 변경
+    @Operation(
+            summary = "영업 상태 변경",
+            description = "PATCH /api/v1/owner/stores/{storeId}/status"
+    )
     @PatchMapping("/stores/{storeId}/status")
-    public StoreStatusResponseDto updateStoreStatus(
+    public ApiResponse<StoreStatusResponseDto> updateStoreStatus(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID storeId,
-            @RequestBody StoreStatusRequestDto request
-    ){
-        return storeService.updateStoreStatus(userDetails.getUserId(),storeId,request);
+            @Valid @RequestBody StoreStatusRequestDto request
+    ) {
+        StoreStatusResponseDto response = storeService.updateStoreStatus(
+                userDetails.getUserId(),
+                storeId,
+                request
+        );
+
+        return ApiResponse.success(response, "영업 상태가 변경되었습니다.");
     }
 
     // 최소 주문 금액 수정
-    @PatchMapping("/stores/{storeId}/minimumOrderPrice")
-    public StoreStatusResponseDto updateMinOrderPrice(
+    @Operation(
+            summary = "최소 주문 금액 수정",
+            description = "PATCH /api/v1/owner/stores/{storeId}/minimum-order-price"
+    )
+    @PatchMapping("/stores/{storeId}/minimum-order-price")
+    public ApiResponse<StoreStatusResponseDto> updateMinOrderPrice(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID storeId,
-            @RequestBody MinOrderPriceUpdateRequestDto request){
-        return storeService.updateMinOrderPrice(userDetails.getUserId(),storeId,request);
+            @Valid @RequestBody MinOrderPriceUpdateRequestDto request
+    ) {
+        StoreStatusResponseDto response = storeService.updateMinOrderPrice(
+                userDetails.getUserId(),
+                storeId,
+                request
+        );
+
+        return ApiResponse.success(response, "최소 주문 금액이 수정되었습니다.");
     }
-
-
-
 }

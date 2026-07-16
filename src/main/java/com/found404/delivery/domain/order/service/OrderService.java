@@ -9,6 +9,9 @@ import com.found404.delivery.domain.order.entity.Order;
 import com.found404.delivery.domain.order.repository.OrderRepository;
 import com.found404.delivery.domain.orderitem.entity.OrderItem;
 import com.found404.delivery.domain.orderitem.repository.OrderItemRepository;
+import com.found404.delivery.domain.payment.service.PaymentService;
+import com.found404.delivery.domain.store.entity.Store;
+import com.found404.delivery.domain.store.entity.StoreStatus;
 import com.found404.delivery.domain.store.repository.StoreRepository;
 import com.found404.delivery.global.exception.CustomException;
 import com.found404.delivery.global.exception.ErrorCode;
@@ -33,10 +36,12 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final AddressRepository addressRepository;
     private final StoreRepository storeRepository;
+    private final PaymentService paymentService;
 
     @Transactional
     public OrderResponseDto createOrder(Long userId, @Valid OrderRequestDto request) {
         Address address = getMyAddress(userId, request.getAddressId());
+        Store store = getAvailableStore(request.getStoreId());
 
         List<UUID> menuIds = request.getItems().stream()
                 .map(OrderItemRequestDto::getMenuId)
@@ -47,7 +52,10 @@ public class OrderService {
         validateMenus(request, menuInfoMap);
 
         int totalMenuPrice = calculateTotalMenuPrice(request, menuInfoMap);
-        int deliveryFee = 0;
+
+        validateMinOrderPrice(totalMenuPrice, store);
+
+        int deliveryFee = store.getDeliveryFee();
         int discountPrice = 0;
 
         Order order = Order.create(
@@ -78,6 +86,23 @@ public class OrderService {
         return OrderResponseDto.from(savedOrder, savedOrderItems);
     }
 
+    private void validateMinOrderPrice(int totalMenuPrice, Store store) {
+        if (totalMenuPrice < store.getMinOrderPrice()) {
+            throw new CustomException(ErrorCode.MIN_ORDER_PRICE_NOT_MET);
+        }
+    }
+
+    private Store getAvailableStore(UUID storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORE_NOT_FOUND));
+
+        if (!Boolean.TRUE.equals(store.getIsActive()) || store.getStatus() != StoreStatus.OPEN) {
+            throw new CustomException(ErrorCode.STORE_NOT_AVAILABLE);
+        }
+
+        return store;
+    }
+
     public Page<OrderListResponseDto> getMyOrders(Long userId, int page, int size) {
         validatePageSize(size);
         Pageable pageable = PageRequest.of(page, size);
@@ -97,6 +122,7 @@ public class OrderService {
     public OrderResponseDto cancelOrder(Long userId, UUID orderId) {
         Order order = findOrderByIdAndUserId(orderId, userId);
         order.cancel();
+        paymentService.cancelPaymentByOrderIdIfExists(userId, orderId);
 
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
 

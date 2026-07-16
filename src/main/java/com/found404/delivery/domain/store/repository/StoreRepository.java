@@ -82,4 +82,6 @@ public interface StoreRepository extends JpaRepository<Store, UUID> {
     Slice<Store> findByStatusAndIsActiveTrue(StoreStatus storeStatus, Pageable pageable);
 
     boolean existsByStoreIdAndOwnerId(UUID storeId, Long ownerId);
+
+    boolean existsByRegion_RegionIdAndIsActiveTrue(UUID regionId);
 }
