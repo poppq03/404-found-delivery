@@ -6,6 +6,8 @@ import com.found404.delivery.domain.region.dto.RegionUpdateRequestDto;
 import com.found404.delivery.domain.region.service.RegionService;
 import com.found404.delivery.global.response.ApiResponse;
 import com.found404.delivery.global.security.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,10 +25,12 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/regions")
+@Tag(name = "Region", description = "MANAGER | MASTER Region 생성 API")
 public class RegionController {
 
     private final RegionService regionService;
-
+  
+    @Operation(summary = "createRegion", description = "api/v1/regions")
     @PostMapping
     @PreAuthorize("hasAnyRole('MASTER', 'MANAGER')")
     public ResponseEntity<ApiResponse<RegionResponseDto>> createRegion(
