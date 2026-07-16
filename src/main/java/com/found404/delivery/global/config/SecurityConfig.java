@@ -48,6 +48,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/regions/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/stores/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/stores/categories/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/stores/*").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )

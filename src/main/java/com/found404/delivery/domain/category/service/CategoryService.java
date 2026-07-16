@@ -53,8 +53,13 @@ public class CategoryService {
     @Transactional
     public CategoryResponseDto updateCategory(UUID categoryId, CategoryUpdateRequestDto request) {
         Category category = getActiveCategory(categoryId);
-        category.update(request.getName().trim(), request.getDescription());
 
+        String newName = request.getName().trim();
+        if (!category.getName().equals(newName) && categoryRepository.existsByName(newName)) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
+        category.update(newName, request.getDescription());
         return CategoryResponseDto.from(category);
     }
 
