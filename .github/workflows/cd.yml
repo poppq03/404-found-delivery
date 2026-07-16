@@ -1,0 +1,45 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Compile
+        run: ./gradlew compileJava --no-daemon
+
+      - name: Prepare SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/ec2_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" << 'EOF'
+          set -euo pipefail
+
+          cd /home/ec2-user/404-found-delivery
+          git checkout develop
+          git pull --ff-only origin develop
+
+          docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+          docker image prune -f
+          docker compose -f docker-compose.prod.yml --env-file .env ps
+          EOF
