@@ -50,12 +50,6 @@
 
 ---
 
-## 📑 API 문서
-
-로컬 실행 후 아래 주소에서 확인할 수 있습니다.
-http://localhost:8080/swagger-ui/index.html
----
-
 ## ✨ 기능 목록
 
 | 도메인 | 내용 |
@@ -135,7 +129,8 @@ http://localhost:8080/swagger-ui/index.html
 
 ## 🗂 ERD
 
-`docs/erd.png` 경로에 이미지를 추가하면 아래에 표시됩니다.
+(https://app.notion.com/p/ERD-3954a3fc0c598096b69fee8e8642d850?source=copy_link)
+
 ---
 
 ## 🚀 실행 방법
