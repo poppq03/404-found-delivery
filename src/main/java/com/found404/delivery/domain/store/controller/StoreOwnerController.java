@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +38,7 @@ public class StoreOwnerController {
             summary = "가게 등록",
             description = "POST /api/v1/owner/stores"
     )
-    @PostMapping("/stores")
+    @PostMapping(value = "/stores", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<StoreDetailResponseDto> createStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestPart(value = "image", required = false) MultipartFile image,
@@ -57,7 +58,7 @@ public class StoreOwnerController {
             summary = "가게 수정",
             description = "PATCH /api/v1/owner/stores/{storeId}"
     )
-    @PatchMapping("/stores/{storeId}")
+    @PatchMapping(value = "/stores/{storeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<StoreDetailResponseDto> updateStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID storeId,
