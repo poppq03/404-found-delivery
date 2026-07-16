@@ -14,7 +14,12 @@ import com.found404.delivery.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.found404.delivery.domain.review.repository.StoreRatingAverage;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -280,5 +285,24 @@ public class ReviewService {
                     ErrorCode.INVALID_RATING
             );
         }
+    }
+
+    /**
+     * 여러 가게의 평균 평점을 한 번에 조회
+     */
+    public Map<UUID, Double> getAverageRatingsByStoreIds(
+            Collection<UUID> storeIds
+    ) {
+        if (storeIds == null || storeIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return reviewRepository
+                .findAverageRatingsByStoreIds(storeIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        StoreRatingAverage::getStoreId,
+                        StoreRatingAverage::getAverageRating
+                ));
     }
 }
