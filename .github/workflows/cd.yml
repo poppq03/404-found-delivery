@@ -26,8 +26,16 @@ jobs:
       - name: Prepare SSH
         run: |
           mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.EC2_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/ec2_key
+
+          if [ -z "${{ secrets.EC2_SSH_KEY_B64 }}" ]; then
+            echo "EC2_SSH_KEY_B64 secret is empty or missing"
+            exit 1
+          fi
+
+          printf '%s' "${{ secrets.EC2_SSH_KEY_B64 }}" | tr -d '[:space:]' | base64 -d > ~/.ssh/ec2_key
           chmod 600 ~/.ssh/ec2_key
+          grep -q "BEGIN .*PRIVATE KEY" ~/.ssh/ec2_key || (echo "Decoded key is missing BEGIN PRIVATE KEY header" && exit 1)
+          grep -q "END .*PRIVATE KEY" ~/.ssh/ec2_key || (echo "Decoded key is missing END PRIVATE KEY footer" && exit 1)
           ssh-keygen -y -f ~/.ssh/ec2_key > /dev/null
           ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
