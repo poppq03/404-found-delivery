@@ -7,10 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Table( name = "p_region" )
+@Table(name = "p_region")
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,19 +27,21 @@ public class Region extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
-
-    private Region (String name){
+    private Region(String name) {
         this.name = name;
         this.isActive = true;
     }
 
-    public static Region createRegion(String name){
+    public static Region createRegion(String name) {
         return new Region(name);
+    }
+
+    public void update(String name) {
+        this.name = name;
     }
 
     public void delete(Long userId) {
         this.isActive = false;
         markDeleted(userId);
     }
-
 }
