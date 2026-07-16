@@ -211,6 +211,9 @@ public class MenuService {
 
     // 숨김 메뉴 조회 권한: 관리자(MANAGER/MASTER)는 전부, OWNER는 본인 소유 가게만
     private boolean canViewHidden(String role, Long userId, UUID storeId) {
+        if (role == null) {
+            return false;   // 비회원은 숨김 메뉴 못 봄
+        }
         Role r = Role.valueOf(role);
         if (r == Role.MANAGER || r == Role.MASTER) {
             return true;

@@ -41,8 +41,8 @@ public class StoreOwnerController {
     @PostMapping(value = "/stores", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<StoreDetailResponseDto> createStore(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestPart(value = "image", required = false) MultipartFile image,
-            @Valid @RequestPart("request") StoreCreateRequestDto request
+            @RequestPart(value = "image", required = true) MultipartFile image,
+            @Valid @RequestPart("data") StoreCreateRequestDto request
     ) {
         StoreDetailResponseDto response = storeService.createStore(
                 userDetails.getUserId(),
@@ -63,7 +63,7 @@ public class StoreOwnerController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID storeId,
             @RequestPart(value = "image", required = false) MultipartFile image,
-            @Valid @RequestPart("request") StoreUpdateRequestDto request
+            @Valid @RequestPart("data") StoreUpdateRequestDto request
     ) {
         StoreDetailResponseDto response = storeService.updateStore(
                 userDetails.getUserId(),
