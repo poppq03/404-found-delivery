@@ -1,9 +1,0 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/delivery_db
-    username: found404
-    password: {비밀번호}
-
-jwt:
-  secret: {실제시크릿키(최소32자이상랜덤문자열)}
-  expiration: 3600000
