@@ -14,7 +14,8 @@ public record PaymentResponse(
         PaymentMethod paymentMethod,
         PaymentStatus paymentStatus,
         Integer amount,
-        LocalDateTime paidAt
+        LocalDateTime paidAt,
+        LocalDateTime canceledAt
 ) {
     public static PaymentResponse from(Payment payment) {
         return new PaymentResponse(
@@ -24,7 +25,8 @@ public record PaymentResponse(
                 payment.getPaymentMethod(),
                 payment.getPaymentStatus(),
                 payment.getAmount(),
-                payment.getPaidAt()
+                payment.getPaidAt(),
+                payment.getCanceledAt()
         );
     }
 }

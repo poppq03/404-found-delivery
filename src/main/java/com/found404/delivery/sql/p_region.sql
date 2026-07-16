@@ -1,6 +1,6 @@
 -- 담당: 서인
 -- 테이블: p_region
-CREATE TABLE region (
+CREATE TABLE p_region (
                         region_id UUID PRIMARY KEY NOT NULL,
 
                         name VARCHAR(100) NOT NULL,
