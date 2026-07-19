@@ -24,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,9 +54,10 @@ class PaymentServiceTest {
     ) {
         Order order = org.mockito.Mockito.mock(Order.class);
 
-        when(order.getId()).thenReturn(orderId);
+        // getId()/getTotalPrice()는 검증 실패 케이스에서 예외가 먼저 던져져 호출되지 않을 수 있어 lenient 처리
+        lenient().when(order.getId()).thenReturn(orderId);
         when(order.getUserId()).thenReturn(userId);
-        when(order.getTotalPrice()).thenReturn(totalPrice);
+        lenient().when(order.getTotalPrice()).thenReturn(totalPrice);
 
         return order;
     }
