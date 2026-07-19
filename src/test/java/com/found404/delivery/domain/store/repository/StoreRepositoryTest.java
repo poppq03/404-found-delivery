@@ -237,7 +237,7 @@ class StoreRepositoryTest {
 
 
         Category category =
-                Category.createCategory(
+                Category.create(
                         "한식",
                         "테스트 카테고리"
                 );
