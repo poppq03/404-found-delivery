@@ -46,7 +46,7 @@
 | 빌드 | Gradle |
 | 문서화 | Swagger (springdoc-openapi) |
 | 외부 연동 | Gemini API(메뉴 설명 생성), AWS S3(이미지 저장) |
-| 기타 | Lombok, QueryDSL |
+| 기타 | Lombok |
 
 ---
 
@@ -95,6 +95,8 @@
 
 http://15.164.251.141:8080/swagger-ui/index.html
 
+_(학습 목적의 배포로 HTTPS는 적용하지 않았습니다. JWT가 평문 HTTP로 오가는 점을 감안하고 테스트용으로만 사용해주세요.)_
+
 ---
 
 ## 🔐 인증 · 권한 구조
@@ -102,9 +104,36 @@ http://15.164.251.141:8080/swagger-ui/index.html
 - **역할(Role) 4단계**: `CUSTOMER` / `OWNER` / `MANAGER` / `MASTER`
 - **인증 방식**: Spring Security + JWT, 세션을 사용하지 않는 STATELESS 구조로 매 요청마다 토큰으로 인증
 - **회원가입 제한**: 회원가입 API로는 CUSTOMER/OWNER만 생성 가능, MANAGER는 MASTER가 별도 API로 생성
-- **권한 검사 방식**: URL 단위가 아니라 컨트롤러 메서드마다 `@PreAuthorize`를 붙여 세밀하게 분리
+- **권한 검사 방식**: 관리자 전용 도메인(카테고리, 지역, 가게 승인 등)은 컨트롤러 메서드에 `@PreAuthorize`를 붙여 분리하고, 그 외 도메인(메뉴, 장바구니, 주문, 결제, AI 요청 등)은 서비스 레이어에서 로그인 사용자의 역할(Role)을 검증하는 방식으로 권한을 확인합니다
 - **공개 API**: 가게/카테고리/지역/메뉴/리뷰의 조회(GET)는 비회원도 접근 가능하도록 별도로 허용
 - **감사(Audit) 자동 기록**: `AuditorAware` 구현체가 JWT로 인증된 사용자 정보를 읽어 생성/수정/삭제 주체를 엔티티에 자동으로 채움
+
+---
+
+## 📦 API 공통 응답 포맷
+
+모든 API는 `ApiResponse<T>`로 감싸서 응답합니다.
+
+**성공**
+```json
+{
+  "success": true,
+  "data": { "...": "..." }
+}
+```
+
+**실패**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "STORE_NOT_FOUND",
+    "message": "가게를 찾을 수 없습니다."
+  }
+}
+```
+
+에러 코드는 `ErrorCode` enum에 정의돼 있고, `GlobalExceptionHandler`가 커스텀 예외(`CustomException`), `@Valid` 검증 실패, 업로드 용량 초과, 인가 실패(`@PreAuthorize` 거부) 등을 모두 이 포맷으로 통일해서 응답합니다.
 
 ---
 
@@ -136,7 +165,7 @@ http://15.164.251.141:8080/swagger-ui/index.html
 
 ## 🗂 ERD
 
-(https://app.notion.com/p/ERD-3954a3fc0c598096b69fee8e8642d850?source=copy_link)
+[Notion에서 ERD 보기](https://app.notion.com/p/ERD-3954a3fc0c598096b69fee8e8642d850?source=copy_link)
 
 ---
 
@@ -148,19 +177,60 @@ git clone https://github.com/poppq03/404-found-delivery.git
 cd 404-found-delivery
 ```
 
-**2. 로컬 DB 실행 (Docker)**
+**2. 환경 변수 설정**
+
+`.env.example`을 복사해 `.env`를 만들고 값을 채웁니다.
+
 ```bash
-docker compose up -d
+cp .env.example .env
 ```
 
-**3. 환경 변수 설정**
+| 변수 | 용도 | 기본값 |
+|---|---|---|
+| `POSTGRES_DB` | 로컬 DB 이름 | `delivery_db` |
+| `POSTGRES_USER` | 로컬 DB 계정 | `found404` |
+| `POSTGRES_PASSWORD` | 로컬 DB 비밀번호 | `found404` |
+| `POSTGRES_PORT` | 로컬 DB 포트 | `5432` |
+| `APP_PORT` | 앱 컨테이너 노출 포트(docker 실행 시) | `8080` |
+| `JWT_SECRET` | JWT 서명 키(최소 32자 랜덤 문자열) | 없음 |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | 메뉴·가게 이미지 업로드용 S3 자격 증명 | 없음 |
+| `AWS_S3_BUCKET` / `AWS_S3_REGION` | 이미지 저장 버킷/리전 | 없음 |
+| `GEMINI_API_KEY` | AI 메뉴 설명 생성용 Gemini API 키 | 없음 |
 
-`application-local.yaml`에 DB 접속 정보, JWT 시크릿, Gemini API 키, S3 관련 값을 채웁니다.
+기본값이 없는 항목(`JWT_SECRET`, AWS 관련, `GEMINI_API_KEY`)은 채우지 않으면 애플리케이션이 기동 시점에 바로 실패합니다. AI·S3 기능을 당장 쓰지 않더라도 임시값이라도 채워야 합니다.
+
+> `src/main/resources/application-local.yaml`은 이미 `${JWT_SECRET}`처럼 환경 변수 플레이스홀더로 채워져 있어 이 파일을 직접 수정할 필요는 없습니다. 다만 Spring Boot는 `.env` 파일을 자동으로 읽지 않으므로(⁠`.env`는 docker compose만 자동으로 인식합니다), 로컬에서 `./gradlew bootRun`으로 직접 실행할 때는 아래처럼 `.env` 값을 셸 환경 변수로 export 해줘야 합니다.
+
+**3. 로컬 DB 실행 (Docker) 및 스키마 적용**
+
+```bash
+docker compose up -d db
+```
+
+`ddl-auto: validate` 설정이라 Hibernate가 테이블을 자동으로 만들어주지 않습니다. DB 컨테이너가 뜬 뒤 `schema.sql`을 직접 적용해야 합니다.
+
+```bash
+docker exec -i found404-postgres psql -U found404 -d delivery_db < schema.sql
+```
 
 **4. 애플리케이션 실행**
+
 ```bash
+set -a; source .env; set +a
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
+
+(Windows PowerShell에서는 `.env`를 직접 export하는 명령이 없으므로, IntelliJ Run Configuration의 EnvFile 플러그인을 쓰거나 각 값을 `$env:JWT_SECRET = "..."` 형태로 수동 설정하세요.)
+
+실행 후 API 문서는 `http://localhost:8080/swagger-ui/index.html`에서 확인할 수 있습니다.
+
+**5. 테스트 실행**
+
+```bash
+./gradlew test
+```
+
+Repository 계층 일부 테스트는 실제 Postgres에 연결해서 검증하므로(H2 등 임베디드 DB 미사용), 3단계에서 띄운 DB 컨테이너가 켜져 있어야 통과합니다.
 
 ---
 
